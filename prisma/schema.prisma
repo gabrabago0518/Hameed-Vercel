@@ -1,0 +1,270 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider           = "prisma-client"
+  output             = "../app/generated/prisma"
+  importFileExtension = "ts"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------- Users & addresses ----------
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  passwordHash String
+  role         UserRole @default(CUSTOMER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  addresses Address[]
+  orders    Order[]
+
+  @@map("users")
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  userId     String
+  label      String? // e.g. "Home", "Work"
+  line1      String
+  line2      String?
+  city       String
+  province   String?
+  postalCode String?
+  latitude   Float?
+  longitude  Float?
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  user   User    @relation(fields: [userId], references: [id])
+  orders Order[]
+
+  @@map("addresses")
+}
+
+// ---------- Restaurants, branches & menu ----------
+
+model Restaurant {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  logoUrl     String?
+  createdAt   DateTime @default(now())
+
+  branches       Branch[]
+  menuCategories MenuCategory[]
+
+  @@map("restaurants")
+}
+
+model Branch {
+  id           String   @id @default(cuid())
+  restaurantId String
+  name         String
+  address      String
+  city         String
+  latitude     Float?
+  longitude    Float?
+  phone        String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  orders     Order[]
+
+  @@map("branches")
+}
+
+model MenuCategory {
+  id           String @id @default(cuid())
+  restaurantId String
+  name         String
+  sortOrder    Int    @default(0)
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  menuItems  MenuItem[]
+
+  @@map("menu_categories")
+}
+
+model MenuItem {
+  id          String   @id @default(cuid())
+  categoryId  String
+  name        String
+  description String?
+  imageUrl    String?
+  price       Decimal  @db.Decimal(10, 2)
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  category   MenuCategory @relation(fields: [categoryId], references: [id])
+  addons     ItemAddon[]
+  orderItems OrderItem[]
+
+  @@map("menu_items")
+}
+
+model ItemAddon {
+  id         String  @id @default(cuid())
+  menuItemId String
+  name       String
+  price      Decimal @db.Decimal(10, 2)
+
+  menuItem        MenuItem         @relation(fields: [menuItemId], references: [id])
+  orderItemAddons OrderItemAddon[]
+
+  @@map("item_addons")
+}
+
+// ---------- Orders ----------
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY_FOR_PICKUP
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  userId      String
+  branchId    String
+  addressId   String
+  status      OrderStatus @default(PENDING)
+  subtotal    Decimal     @db.Decimal(10, 2)
+  deliveryFee Decimal     @db.Decimal(10, 2)
+  total       Decimal     @db.Decimal(10, 2)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  user          User                 @relation(fields: [userId], references: [id])
+  branch        Branch               @relation(fields: [branchId], references: [id])
+  address       Address              @relation(fields: [addressId], references: [id])
+  items         OrderItem[]
+  statusHistory OrderStatusHistory[]
+  payment       Payment?
+  delivery      OrderDelivery?
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String  @id @default(cuid())
+  orderId    String
+  menuItemId String
+  quantity   Int
+  // Snapshot of MenuItem.price at the moment the order was placed, so a later
+  // menu price change never changes the total of a past order.
+  unitPrice  Decimal @db.Decimal(10, 2)
+  notes      String?
+
+  order    Order            @relation(fields: [orderId], references: [id])
+  menuItem MenuItem         @relation(fields: [menuItemId], references: [id])
+  addons   OrderItemAddon[]
+
+  @@map("order_items")
+}
+
+model OrderItemAddon {
+  id          String  @id @default(cuid())
+  orderItemId String
+  addonId     String
+  // Snapshot of ItemAddon.price at order time, same reasoning as OrderItem.unitPrice.
+  unitPrice   Decimal @db.Decimal(10, 2)
+
+  orderItem OrderItem @relation(fields: [orderItemId], references: [id])
+  addon     ItemAddon @relation(fields: [addonId], references: [id])
+
+  @@map("order_item_addons")
+}
+
+// Kept separate from Order.status so the tracking UI can show the full
+// timeline (every status the order passed through), not just the current one.
+model OrderStatusHistory {
+  id        String      @id @default(cuid())
+  orderId   String
+  status    OrderStatus
+  note      String?
+  createdAt DateTime    @default(now())
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@map("order_status_history")
+}
+
+// ---------- Payments ----------
+
+enum PaymentMethod {
+  CASH_ON_DELIVERY
+  CARD
+  GCASH
+  MAYA
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  orderId        String        @unique
+  method         PaymentMethod
+  status         PaymentStatus @default(PENDING)
+  amount         Decimal       @db.Decimal(10, 2)
+  transactionRef String?
+  paidAt         DateTime?
+  createdAt      DateTime      @default(now())
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@map("payments")
+}
+
+// ---------- Delivery ----------
+
+model Rider {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  vehicle   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  deliveries OrderDelivery[]
+
+  @@map("riders")
+}
+
+model OrderDelivery {
+  id          String    @id @default(cuid())
+  orderId     String    @unique
+  riderId     String?
+  pickedUpAt  DateTime?
+  deliveredAt DateTime?
+  eta         DateTime?
+
+  order Order  @relation(fields: [orderId], references: [id])
+  rider Rider? @relation(fields: [riderId], references: [id])
+
+  @@map("order_deliveries")
+}
