@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { getCurrentUser } from "../../lib/session.js";
 import { logoutAction } from "../logout/actions.js";
-import { saveAddressAction, savePhoneAction } from "./actions.js";
+import { savePhoneAction } from "./actions.js";
 import { prisma } from "../../lib/prisma.js";
+import { STATUS_LABELS } from "../../lib/orderStatus.js";
 import PhoneField from "../components/PhoneField.jsx";
-import AddressField from "../components/AddressField.jsx";
 
 export default async function AccountPage() {
   const user = await getCurrentUser();
@@ -26,8 +26,9 @@ export default async function AccountPage() {
     );
   }
 
-  const [address, orders] = await Promise.all([
-    prisma.address.findFirst({ where: { userId: user.id } }),
+  const [defaultAddress, addressCount, orders] = await Promise.all([
+    prisma.address.findFirst({ where: { userId: user.id, isDefault: true } }),
+    prisma.address.count({ where: { userId: user.id } }),
     prisma.order.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: "desc" },
@@ -36,8 +37,10 @@ export default async function AccountPage() {
     }),
   ]);
 
-  const missingPhone = !user.phone;
-  const missingAddress = !address;
+  // ADMIN/EMPLOYEE accounts aren't customers placing delivery orders, so the
+  // "complete your profile" nagging only applies to CUSTOMER accounts.
+  const missingPhone = user.role === "CUSTOMER" && !user.phone;
+  const missingAddress = user.role === "CUSTOMER" && addressCount === 0;
 
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-8 px-6 py-16">
@@ -81,18 +84,41 @@ export default async function AccountPage() {
       </section>
 
       <section className="rounded-2xl border border-zinc-200 bg-white p-5">
-        <h2 className="font-[family-name:var(--font-heading)] text-lg font-semibold text-zinc-900">
-          Delivery address
-        </h2>
-        <div className="mt-3">
-          <AddressField address={address} action={saveAddressAction} />
+        <div className="flex items-center justify-between">
+          <h2 className="font-[family-name:var(--font-heading)] text-lg font-semibold text-zinc-900">
+            Delivery addresses
+          </h2>
+          <Link href="/account/addresses" className="text-sm font-medium text-red-600 hover:underline">
+            Manage
+          </Link>
         </div>
+        {defaultAddress ? (
+          <div className="mt-3 text-sm text-zinc-700">
+            <p className="font-medium text-zinc-900">{defaultAddress.label ?? "Default"}</p>
+            <p>
+              {defaultAddress.line1}, {defaultAddress.barangay}, {defaultAddress.city}
+            </p>
+          </div>
+        ) : (
+          <p className="mt-3 text-sm text-zinc-600">
+            No saved addresses yet.{" "}
+            <Link href="/account/addresses" className="font-medium text-red-600 hover:underline">
+              Add one
+            </Link>
+            .
+          </p>
+        )}
       </section>
 
       <section className="rounded-2xl border border-zinc-200 bg-white p-5">
-        <h2 className="font-[family-name:var(--font-heading)] text-lg font-semibold text-zinc-900">
-          Recent transactions
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="font-[family-name:var(--font-heading)] text-lg font-semibold text-zinc-900">
+            Recent Orders
+          </h2>
+          <Link href="/orders" className="text-sm font-medium text-red-600 hover:underline">
+            View all
+          </Link>
+        </div>
         {orders.length === 0 ? (
           <p className="mt-3 text-sm text-zinc-600">No orders yet.</p>
         ) : (
@@ -101,7 +127,11 @@ export default async function AccountPage() {
               <div key={order.id} className="rounded-xl border border-zinc-100 p-3 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-zinc-900">
-                    {order.createdAt.toLocaleDateString()}
+                    {order.createdAt.toLocaleDateString()}{" "}
+                    {order.createdAt.toLocaleTimeString([], {
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
                   </span>
                   <span className="font-semibold text-red-600">
                     ₱{Number(order.total).toFixed(2)}
@@ -111,7 +141,7 @@ export default async function AccountPage() {
                   {order.items.map((item) => item.menuItem.name).join(", ")}
                 </p>
                 <p className="mt-1 text-xs font-medium uppercase tracking-wide text-zinc-400">
-                  {order.status}
+                  {STATUS_LABELS[order.status] ?? order.status}
                 </p>
               </div>
             ))}

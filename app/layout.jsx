@@ -1,12 +1,20 @@
-import { Space_Grotesk, Inter } from "next/font/google";
+import { Anton, Inter } from "next/font/google";
 import Header from "./components/Header.jsx";
+import Footer from "./components/Footer.jsx";
 import FloatingCart from "./components/FloatingCart.jsx";
+import ChromeGate from "./components/ChromeGate.jsx";
+import { CartUIProvider } from "./components/CartUIContext.jsx";
+import { ToastProvider } from "./components/ToastContext.jsx";
 import { getCartDetails } from "../lib/cart.js";
 import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
+// Anton for headings, per brand request — a bold, condensed display face
+// that reads well at hero-carousel size. Anton only ships one weight (400),
+// which is already heavy enough to work as a "bold" heading font on its own.
+const anton = Anton({
+  variable: "--font-anton",
   subsets: ["latin"],
+  weight: ["400"],
 });
 
 const inter = Inter({
@@ -25,12 +33,23 @@ export default async function RootLayout({ children }) {
   return (
     <html
       lang="en"
-      className={`${spaceGrotesk.variable} ${inter.variable} h-full antialiased`}
+      className={`${anton.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
-        <Header />
-        {children}
-        <FloatingCart items={items} total={total} />
+        <ToastProvider>
+          <CartUIProvider>
+            <ChromeGate>
+              <Header />
+            </ChromeGate>
+            {children}
+            <ChromeGate>
+              <FloatingCart items={items} total={total} />
+            </ChromeGate>
+            <ChromeGate>
+              <Footer />
+            </ChromeGate>
+          </CartUIProvider>
+        </ToastProvider>
       </body>
     </html>
   );

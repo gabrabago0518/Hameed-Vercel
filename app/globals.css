@@ -9,11 +9,16 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
-  --font-heading: var(--font-space-grotesk);
+  --font-heading: var(--font-anton);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  /* The homepage carousel intentionally breaks out to full viewport width
+     (100vw), which can be a hair wider than the visible viewport when a
+     scrollbar is present — this stops that from creating a horizontal
+     scrollbar of its own. */
+  overflow-x: hidden;
 }

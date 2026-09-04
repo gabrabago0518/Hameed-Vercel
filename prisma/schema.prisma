@@ -17,6 +17,7 @@ datasource db {
 
 enum UserRole {
   CUSTOMER
+  EMPLOYEE
   ADMIN
 }
 
@@ -27,22 +28,49 @@ model User {
   phone        String?
   passwordHash String
   role         UserRole @default(CUSTOMER)
+  // Defaults to true at the column level so existing accounts (created
+  // before email verification existed) aren't retroactively locked out —
+  // new signups explicitly pass isVerified: false to override this.
+  isVerified   Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  addresses Address[]
-  orders    Order[]
+  addresses               Address[]
+  orders                  Order[]
+  emailVerificationTokens EmailVerificationToken[]
+  codVerifications        Payment[]                @relation("CodVerifications")
+  orderStatusChanges      OrderStatusHistory[]
 
   @@map("users")
+}
+
+model EmailVerificationToken {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  // Set once the token has been used to verify the account, so it can't be
+  // replayed. Also doubles as "was this ever used" for cleanliness.
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("email_verification_tokens")
 }
 
 model Address {
   id         String   @id @default(cuid())
   userId     String
-  label      String? // e.g. "Home", "Work"
-  line1      String
+  label      String? // "Home" / "Office" / "Other" — or a custom string typed in for "Other".
+  line1      String // street + house/unit number — free text, no dataset to validate against.
   line2      String?
+  // City/municipality and barangay are both PSGC-validated (NCR only for
+  // now) — the app looks these up against lib/psgc-ncr.json rather than
+  // taking free text, so they're plain strings here, not a separate table.
   city       String
+  barangay   String?
+  landmark   String? // free text, e.g. "Near the church"
   province   String?
   postalCode String?
   latitude   Float?
@@ -134,6 +162,11 @@ model ItemAddon {
 
 enum OrderStatus {
   PENDING
+  // Cash-on-delivery orders only — the manual equivalent of PENDING for a
+  // QR/GCash order, except there's no PayMongo intent to poll or webhook to
+  // wait for. Staff calling the customer and hitting "Verify" is what moves
+  // this to CONFIRMED, the same status a successful PayMongo payment reaches.
+  PENDING_CONFIRMATION
   CONFIRMED
   PREPARING
   READY_FOR_PICKUP
@@ -146,7 +179,8 @@ model Order {
   id          String      @id @default(cuid())
   userId      String
   branchId    String
-  addressId   String
+  // Only set for DELIVERY orders — a PICKUP order has no delivery address.
+  addressId   String?
   status      OrderStatus @default(PENDING)
   subtotal    Decimal     @db.Decimal(10, 2)
   deliveryFee Decimal     @db.Decimal(10, 2)
@@ -156,7 +190,7 @@ model Order {
 
   user          User                 @relation(fields: [userId], references: [id])
   branch        Branch               @relation(fields: [branchId], references: [id])
-  address       Address              @relation(fields: [addressId], references: [id])
+  address       Address?             @relation(fields: [addressId], references: [id])
   items         OrderItem[]
   statusHistory OrderStatusHistory[]
   payment       Payment?
@@ -202,9 +236,16 @@ model OrderStatusHistory {
   orderId   String
   status    OrderStatus
   note      String?
+  // Who made this change, when it was a deliberate staff/admin action (staff
+  // clicking "Mark ...", an admin's manual status override, or an admin's COD
+  // "Verify"). Left null for automated transitions with no human actor —
+  // PayMongo webhook payments, the payment-status poll, or the initial
+  // "Order placed" row created at checkout.
+  changedByUserId String?
   createdAt DateTime    @default(now())
 
-  order Order @relation(fields: [orderId], references: [id])
+  order       Order @relation(fields: [orderId], references: [id])
+  changedBy   User? @relation(fields: [changedByUserId], references: [id])
 
   @@map("order_status_history")
 }
@@ -212,16 +253,16 @@ model OrderStatusHistory {
 // ---------- Payments ----------
 
 enum PaymentMethod {
-  CASH_ON_DELIVERY
-  CARD
+  QR_CODE
   GCASH
-  MAYA
+  CASH_ON_DELIVERY
 }
 
 enum PaymentStatus {
   PENDING
   PAID
   FAILED
+  EXPIRED
   REFUNDED
 }
 
@@ -231,13 +272,54 @@ model Payment {
   method         PaymentMethod
   status         PaymentStatus @default(PENDING)
   amount         Decimal       @db.Decimal(10, 2)
+  // Our own human-readable reference, shown to the customer (see HM-XXXXXXXX
+  // in app/checkout/actions.js). Independent of anything PayMongo assigns.
   transactionRef String?
-  paidAt         DateTime?
-  createdAt      DateTime      @default(now())
+
+  // --- PayMongo fields ---
+  // The Payment Intent id (`pi_...`) — this is the key a webhook event uses
+  // to tell us which payment it's about, so it must be unique and indexed.
+  paymongoPaymentIntentId String? @unique
+  // GCash/Maya use a redirect flow: PayMongo hands us a URL, we send the
+  // customer there, they authenticate in-app, then get redirected back.
+  paymongoCheckoutUrl     String?
+  // QRPh instead hands us the QR payload/image directly, to render in place
+  // rather than redirecting anywhere.
+  paymongoQrCodeData      String?
+  // When this Payment Intent's window closes. A PENDING payment past this
+  // time gets treated as EXPIRED (checked lazily — see the polling route —
+  // there's no cron/scheduler in this project).
+  expiresAt               DateTime?
+
+  // --- Cash on Delivery fields ---
+  // Set when an admin clicks "Verify" on /admin/orders after calling the
+  // customer to confirm — the manual equivalent of a PayMongo webhook firing.
+  codVerifiedAt         DateTime?
+  codVerifiedByUserId   String?
+  codVerifiedBy         User?     @relation("CodVerifications", fields: [codVerifiedByUserId], references: [id])
+
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
 
   order Order @relation(fields: [orderId], references: [id])
 
   @@map("payments")
+}
+
+// Records every PayMongo webhook event we've successfully processed, keyed
+// by PayMongo's own event id. A webhook provider can and will redeliver the
+// same event more than once — checking this table before acting on an event
+// is what makes the webhook handler idempotent (never double-mark an order
+// paid or fire fulfillment twice for the same event).
+model WebhookEvent {
+  id                String   @id @default(cuid())
+  provider          String
+  providerEventId   String
+  type              String
+  receivedAt        DateTime @default(now())
+
+  @@unique([provider, providerEventId])
+  @@map("webhook_events")
 }
 
 // ---------- Delivery ----------

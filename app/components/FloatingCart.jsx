@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { ShoppingCart, X } from "lucide-react";
-import { removeFromCartAction } from "../cart/actions.js";
+import { removeFromCartAction, updateCartQuantityAction } from "../cart/actions.js";
+import { useCartUI } from "./CartUIContext.jsx";
 
 export default function FloatingCart({ items, total }) {
-  const [open, setOpen] = useState(false);
+  const { open, setOpen } = useCartUI();
   const count = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
@@ -57,19 +57,50 @@ export default function FloatingCart({ items, total }) {
                     <div key={item.id} className="flex items-center justify-between gap-2">
                       <div>
                         <p className="text-sm font-semibold text-zinc-900">{item.name}</p>
-                        <p className="text-xs text-zinc-500">
-                          {item.quantity} × ₱{item.price.toFixed(2)}
-                        </p>
+                        <p className="text-xs text-zinc-500">₱{item.price.toFixed(2)} each</p>
                       </div>
-                      <form action={removeFromCartAction}>
-                        <input type="hidden" name="menuItemId" value={item.id} />
-                        <button
-                          type="submit"
-                          className="text-xs text-zinc-400 hover:text-red-600"
-                        >
-                          Remove
-                        </button>
-                      </form>
+
+                      <div className="flex items-center gap-2">
+                        <form action={updateCartQuantityAction}>
+                          <input type="hidden" name="menuItemId" value={item.id} />
+                          <input type="hidden" name="quantity" value={item.quantity - 1} />
+                          <button
+                            type="submit"
+                            className="h-6 w-6 rounded-full border border-zinc-300 text-xs text-zinc-600 hover:bg-zinc-50"
+                          >
+                            −
+                          </button>
+                        </form>
+
+                        <span className="w-4 text-center text-sm font-medium text-zinc-900">
+                          {item.quantity}
+                        </span>
+
+                        <form action={updateCartQuantityAction}>
+                          <input type="hidden" name="menuItemId" value={item.id} />
+                          <input type="hidden" name="quantity" value={item.quantity + 1} />
+                          <button
+                            type="submit"
+                            className="h-6 w-6 rounded-full border border-zinc-300 text-xs text-zinc-600 hover:bg-zinc-50"
+                          >
+                            +
+                          </button>
+                        </form>
+
+                        <span className="ml-1 w-14 text-right text-sm font-semibold text-zinc-900">
+                          ₱{(item.price * item.quantity).toFixed(2)}
+                        </span>
+
+                        <form action={removeFromCartAction}>
+                          <input type="hidden" name="menuItemId" value={item.id} />
+                          <button
+                            type="submit"
+                            className="text-xs text-zinc-400 hover:text-red-600"
+                          >
+                            Remove
+                          </button>
+                        </form>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -83,11 +114,11 @@ export default function FloatingCart({ items, total }) {
                   <span className="text-red-600">₱{total.toFixed(2)}</span>
                 </div>
                 <Link
-                  href="/cart"
+                  href="/checkout"
                   onClick={() => setOpen(false)}
                   className="mt-4 block rounded-full bg-red-600 px-6 py-2.5 text-center text-sm font-semibold text-white hover:bg-red-700"
                 >
-                  View full cart
+                  Checkout
                 </Link>
               </div>
             )}

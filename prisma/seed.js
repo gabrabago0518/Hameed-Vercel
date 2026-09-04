@@ -8,10 +8,14 @@ async function main() {
       branches: {
         create: [
           {
-            name: "Hameed the Love Recipe - Quezon City",
-            address: "123 Commonwealth Ave",
-            city: "Quezon City",
-            phone: "0917-000-0001",
+            name: "Maharlika Branch",
+            address: "Maharlika Village",
+            city: "Taguig City",
+          },
+          {
+            name: "New Lower Bicutan Branch",
+            address: "New Lower Bicutan",
+            city: "Taguig City",
           },
         ],
       },
@@ -78,6 +82,72 @@ async function main() {
               create: [
                 { name: "Iced Tea", price: 45.0 },
                 { name: "Bottled Water", price: 25.0 },
+              ],
+            },
+          },
+          {
+            name: "Silog Meals",
+            sortOrder: 4,
+            menuItems: {
+              create: [
+                {
+                  name: "Tapsilog",
+                  description: "Beef tapa with garlic rice and a fried egg.",
+                  price: 79.0,
+                },
+                {
+                  name: "Chicksilog",
+                  description: "Fried chicken with garlic rice and a fried egg.",
+                  price: 79.0,
+                },
+                {
+                  name: "Longsilog",
+                  description: "Sweet Filipino sausage with garlic rice and a fried egg.",
+                  price: 69.0,
+                },
+                {
+                  name: "Spicy Pastil Silog",
+                  description: "Our signature pastil with a spicy kick, garlic rice, and a fried egg.",
+                  price: 75.0,
+                },
+                {
+                  name: "Hotsilog",
+                  description: "Spicy hotdog with garlic rice and a fried egg.",
+                  price: 69.0,
+                },
+                {
+                  name: "Chicken Wings",
+                  description: "Crispy fried chicken wings.",
+                  price: 99.0,
+                },
+              ],
+            },
+          },
+          {
+            name: "Also Available",
+            sortOrder: 5,
+            menuItems: {
+              create: [
+                {
+                  name: "Chicken Sisig",
+                  description: "Sizzling chopped chicken sisig.",
+                  price: 129.0,
+                },
+                {
+                  name: "Bulalo (Regular)",
+                  description: "Beef bone marrow soup, regular size.",
+                  price: 149.0,
+                },
+                {
+                  name: "Bulalo (Special)",
+                  description: "Beef bone marrow soup, special size with extra meat.",
+                  price: 199.0,
+                },
+                {
+                  name: "Pares",
+                  description: "Braised beef stew served with garlic rice.",
+                  price: 99.0,
+                },
               ],
             },
           },

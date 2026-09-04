@@ -56,33 +56,6 @@ export default function SignupPage() {
         </div>
 
         <div>
-          <label htmlFor="line1" className="text-sm font-medium text-zinc-700">
-            Delivery address
-          </label>
-          <input
-            id="line1"
-            name="line1"
-            type="text"
-            required
-            placeholder="Street address"
-            className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="city" className="text-sm font-medium text-zinc-700">
-            City
-          </label>
-          <input
-            id="city"
-            name="city"
-            type="text"
-            required
-            className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none"
-          />
-        </div>
-
-        <div>
           <label htmlFor="password" className="text-sm font-medium text-zinc-700">
             Password
           </label>

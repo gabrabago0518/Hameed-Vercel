@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "../../lib/prisma.js";
-import { addToCartAction } from "../cart/actions.js";
 import { getCurrentUser } from "../../lib/session.js";
+import AddToCartButton from "./AddToCartButton.jsx";
 
 export default async function MenuPage() {
   const user = await getCurrentUser();
@@ -62,15 +62,7 @@ export default async function MenuPage() {
                     ₱{Number(item.price).toFixed(2)}
                   </span>
                   {user ? (
-                    <form action={addToCartAction}>
-                      <input type="hidden" name="menuItemId" value={item.id} />
-                      <button
-                        type="submit"
-                        className="rounded-full bg-red-600 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-red-700"
-                      >
-                        Add
-                      </button>
-                    </form>
+                    <AddToCartButton menuItemId={item.id} itemName={item.name} />
                   ) : (
                     <Link
                       href="/login"
