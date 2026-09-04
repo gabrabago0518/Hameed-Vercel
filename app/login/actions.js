@@ -38,7 +38,7 @@ export async function loginAction(prevState, formData) {
   // Staff don't need the customer account page at all — send them straight
   // to the section they actually use.
   if (user.role === "ADMIN") redirect("/admin");
-  if (user.role === "EMPLOYEE") redirect("/staff");
+  if (user.role === "STAFF") redirect("/staff/dashboard");
 
   // Every new signup now reaches login with zero addresses (signup no
   // longer collects one) — send them to onboarding before the main app.

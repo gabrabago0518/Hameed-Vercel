@@ -57,9 +57,9 @@ export default async function Header() {
                       Admin dashboard
                     </Link>
                   )}
-                  {user.role === "EMPLOYEE" && (
+                  {user.role === "STAFF" && (
                     <Link
-                      href="/staff"
+                      href="/staff/dashboard"
                       className="block rounded-lg px-3 py-2 text-left text-sm font-medium text-zinc-700 hover:bg-zinc-50"
                     >
                       Staff dashboard

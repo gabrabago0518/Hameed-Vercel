@@ -37,7 +37,7 @@ export default async function AccountPage() {
     }),
   ]);
 
-  // ADMIN/EMPLOYEE accounts aren't customers placing delivery orders, so the
+  // ADMIN/STAFF accounts aren't customers placing delivery orders, so the
   // "complete your profile" nagging only applies to CUSTOMER accounts.
   const missingPhone = user.role === "CUSTOMER" && !user.phone;
   const missingAddress = user.role === "CUSTOMER" && addressCount === 0;

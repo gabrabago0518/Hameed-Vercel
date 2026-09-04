@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { addToCart, removeFromCart, setCartQuantity } from "../../lib/cart.js";
 import { getCurrentUser } from "../../lib/session.js";
 import { isProfileComplete } from "../../lib/profile.js";
+import { prisma } from "../../lib/prisma.js";
 
 export async function addToCartAction(formData) {
   const user = await getCurrentUser();
@@ -17,6 +18,13 @@ export async function addToCartAction(formData) {
 
   const menuItemId = formData.get("menuItemId")?.toString();
   if (!menuItemId) return;
+
+  // The menu page already disables the Add button for an out-of-stock item,
+  // but that's UI only — enforce it here too so a direct request can't add
+  // one anyway (same "don't just hide it in the UI" rule this app already
+  // follows for login/profile gating above).
+  const menuItem = await prisma.menuItem.findUnique({ where: { id: menuItemId } });
+  if (!menuItem || !menuItem.isAvailable) return;
 
   await addToCart(menuItemId, 1);
   revalidatePath("/cart");

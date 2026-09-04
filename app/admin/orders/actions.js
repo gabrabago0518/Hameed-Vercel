@@ -21,6 +21,8 @@ export async function verifyCodOrderAction(formData) {
 
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
+  revalidatePath("/staff/dashboard");
+  revalidatePath("/staff/orders");
 }
 
 // Lets an admin manually set an order to any fulfillment status — including
@@ -64,7 +66,8 @@ export async function setOrderStatusAction(formData) {
 
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
-  revalidatePath("/staff");
+  revalidatePath("/staff/dashboard");
+  revalidatePath("/staff/orders");
   revalidatePath(`/orders/${orderId}`);
   redirect(`/admin/orders/${orderId}`);
 }
