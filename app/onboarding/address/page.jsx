@@ -18,7 +18,7 @@ export default async function OnboardingAddressPage({ searchParams }) {
   if (user.role !== "CUSTOMER") redirect(user.role === "ADMIN" ? "/admin" : "/staff/dashboard");
 
   const addressCount = await prisma.address.count({ where: { userId: user.id } });
-  if (addressCount > 0) redirect("/account");
+  if (addressCount > 0) redirect("/");
 
   const { error } = await searchParams;
 
@@ -43,7 +43,7 @@ export default async function OnboardingAddressPage({ searchParams }) {
           action={createAddressAction}
           showDefaultCheckbox={false}
           submitLabel="Save address & continue"
-          redirectTo="/account"
+          redirectTo="/"
           errorRedirectTo="/onboarding/address"
         />
       </div>
