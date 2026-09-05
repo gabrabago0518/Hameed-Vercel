@@ -311,7 +311,13 @@ export async function GET(request) {
           comboMealsItems: comboResults,
         };
       },
-      { timeout: 30000 }
+      // maxWait: how long Prisma waits to acquire a connection and actually
+      // start the transaction — separate from timeout (how long the
+      // transaction body can run once started). Neon's pooled connection
+      // can take longer than Prisma's 2s default to hand over a free
+      // connection, especially after a cold start; this is what produced
+      // "Unable to start a transaction in the given time" on the first run.
+      { maxWait: 15000, timeout: 30000 }
     );
 
     return NextResponse.json({ ok: true, results });
