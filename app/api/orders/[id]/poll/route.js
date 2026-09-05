@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "../../../../../lib/session.js";
 import { prisma } from "../../../../../lib/prisma.js";
 import { retrievePaymentIntent } from "../../../../../lib/paymongo.js";
-import { clearCart } from "../../../../../lib/cart.js";
-import { clearFulfillment } from "../../../../../lib/fulfillment.js";
 import {
   markOrderPaid,
   markOrderPaymentExpired,
@@ -72,19 +70,6 @@ export async function GET(request, { params }) {
     where: { id },
     include: { payment: true },
   });
-
-  // The cart/fulfillment cookies deliberately don't clear at checkout
-  // anymore (see placeOrderAction) — they clear here instead, the first time
-  // the customer's own browser observes this order as actually PAID. This is
-  // the only place that *can* do it: a PayMongo webhook and a staff COD
-  // verification both change Payment.status without ever touching the
-  // customer's cookies, since neither one is a request from their browser.
-  // Idempotent — clearing an already-empty cart is a harmless no-op, so
-  // there's no need to track whether this is the first time it's fired.
-  if (fresh.payment?.status === "PAID") {
-    await clearCart();
-    await clearFulfillment();
-  }
 
   return NextResponse.json({
     orderStatus: fresh.status,

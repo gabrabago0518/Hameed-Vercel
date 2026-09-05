@@ -361,6 +361,10 @@ model Payment {
   codVerifiedAt         DateTime?
   codVerifiedByUserId   String?
   codVerifiedBy         User?     @relation("CodVerifications", fields: [codVerifiedByUserId], references: [id])
+  // The amount the customer says they'll hand over in cash, collected on the
+  // payment step — so whoever delivers/hands off the order knows how much
+  // change to bring. Only ever set for CASH_ON_DELIVERY payments.
+  codExchangeFor        Decimal?  @db.Decimal(10, 2)
 
   paidAt    DateTime?
   createdAt DateTime  @default(now())

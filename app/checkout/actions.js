@@ -2,11 +2,10 @@
 
 import crypto from "node:crypto";
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "../../lib/session.js";
 import { isProfileComplete } from "../../lib/profile.js";
-import { getFulfillment, setFulfillment } from "../../lib/fulfillment.js";
-import { getCartDetails } from "../../lib/cart.js";
+import { getFulfillment, setFulfillment, clearFulfillment } from "../../lib/fulfillment.js";
+import { getCartDetails, clearCart } from "../../lib/cart.js";
 import { prisma } from "../../lib/prisma.js";
 import { createAndAttachPaymentIntent } from "../../lib/paymongo.js";
 import { resolveBaseUrl } from "../../lib/requestUrl.js";
@@ -42,7 +41,10 @@ export async function setFulfillmentAction(formData) {
   }
 
   await setFulfillment({ method, branchId, ...(addressId ? { addressId } : {}) });
-  revalidatePath("/checkout");
+  // By request: confirming delivery/pickup here now moves straight to the
+  // payment method step on its own page, rather than revealing a "How would
+  // you like to pay?" section further down this same one.
+  redirect("/checkout/payment");
 }
 
 function generateReference() {
@@ -62,12 +64,12 @@ export async function placeOrderAction(formData) {
 
   const fulfillment = await getFulfillment();
   if (!fulfillment) {
-    redirect("/checkout?error=no_fulfillment");
+    redirect("/checkout/delivery?error=no_fulfillment");
   }
 
   const paymentMethod = formData.get("paymentMethod")?.toString();
   if (!["QR_CODE", "GCASH", "CASH_ON_DELIVERY"].includes(paymentMethod)) {
-    redirect("/checkout?error=no_payment_method");
+    redirect("/checkout/payment?error=no_payment_method");
   }
   const isCod = paymentMethod === "CASH_ON_DELIVERY";
 
@@ -84,13 +86,27 @@ export async function placeOrderAction(formData) {
       ? await prisma.address.findUnique({ where: { id: fulfillment.addressId } })
       : null;
     if (!address || address.userId !== user.id) {
-      redirect("/checkout?error=no_fulfillment");
+      redirect("/checkout/delivery?error=no_fulfillment");
     }
     addressId = address.id;
   }
 
   const deliveryFee = 0;
   const orderTotal = total + deliveryFee;
+
+  // The amount the customer says they'll hand over in cash — collected on
+  // the payment step so whoever hands off the order knows how much change to
+  // bring. Must be at least the order total; anything else means the field
+  // was left blank or someone tampered with the request.
+  let codExchangeFor = null;
+  if (isCod) {
+    const raw = formData.get("exchangeFor")?.toString();
+    const parsed = raw ? Number.parseFloat(raw) : NaN;
+    if (!raw || Number.isNaN(parsed) || parsed < orderTotal) {
+      redirect("/checkout/payment?error=invalid_exchange");
+    }
+    codExchangeFor = parsed;
+  }
 
   // COD has no payment to collect online, so it starts at its own status
   // (PENDING_CONFIRMATION) rather than PENDING — a plain PENDING here would
@@ -148,6 +164,7 @@ export async function placeOrderAction(formData) {
           status: "PENDING",
           amount: orderTotal,
           transactionRef: generateReference(),
+          ...(isCod ? { codExchangeFor } : {}),
         },
       },
     },
@@ -185,18 +202,21 @@ export async function placeOrderAction(formData) {
     }
   }
 
-  // Deliberately NOT clearing the cart/fulfillment cookie here — by request,
-  // the cart should still show its items if the customer goes back to the
-  // menu/homepage or refreshes before actually paying. It only clears once
-  // the payment genuinely succeeds (see the poll route below, which is the
-  // only place that can touch the customer's own cookies — a PayMongo
-  // webhook or a staff COD verification can't, since those aren't requests
-  // from the customer's browser). Known accepted trade-off, same one this
-  // project hit the first time it built this: if the customer starts a
-  // second, unrelated cart while this order is still awaiting payment, and
-  // then reopens this order's confirmation page after it's confirmed paid,
-  // that second cart gets cleared too, since clearing isn't scoped to a
-  // specific order. Considered narrow enough to accept rather than track
-  // "which order does this cart belong to" just to prevent it.
-  redirect(`/orders/${order.id}`);
+  // Cleared here, right as the order is placed, rather than waiting for
+  // payment to actually be confirmed. The earlier design waited for
+  // confirmation (via the poll route touching the cookie once
+  // Payment.status flips to PAID) specifically so refreshing/going back
+  // before paying wouldn't make it look like the order vanished — but that
+  // meant a COD order verified by staff while the customer isn't sitting on
+  // its confirmation page (the normal case: they see "we'll call you" and
+  // move on) never got its cart cleared at all, since nothing else touches
+  // the customer's own cookies for them. The order/its items are already
+  // safely in the database by this point regardless of payment method, so
+  // the cart cookie has no remaining purpose to preserve — retrying a
+  // failed/pending payment happens against this order (via /orders/[id]),
+  // not by re-adding items to a fresh cart.
+  await clearCart();
+  await clearFulfillment();
+
+  redirect(`/checkout/confirmation/${order.id}`);
 }

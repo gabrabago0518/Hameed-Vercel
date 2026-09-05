@@ -125,6 +125,9 @@ export default async function AdminOrderDetailPage({ params, searchParams }) {
             <p>Method: {PAYMENT_METHOD_LABELS[order.payment.method] ?? order.payment.method}</p>
             <p>Status: {order.payment.status}</p>
             <p>Reference: {order.payment.transactionRef ?? "—"}</p>
+            {order.payment.codExchangeFor != null && (
+              <p>Exchange for: ₱{Number(order.payment.codExchangeFor).toFixed(2)}</p>
+            )}
             {order.payment.paidAt && (
               <p>Paid at: {order.payment.paidAt.toLocaleString()}</p>
             )}
