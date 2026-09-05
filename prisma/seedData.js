@@ -210,6 +210,31 @@ export const restaurantSeedData = {
           ],
         },
       },
+      {
+        name: "Also Available",
+        sortOrder: 4,
+        menuItems: {
+          create: [
+            {
+              name: "Pares",
+              description: "Braised beef stew served with garlic rice.",
+              // Matches the real price shown on the "Hameed Pure Beef Soup
+              // Menu" poster, not the old ₱99 placeholder.
+              price: 60.0,
+            },
+            {
+              name: "Bulalo (Regular)",
+              description: "Beef bone marrow soup, regular size.",
+              price: 149.0,
+            },
+            {
+              name: "Bulalo (Special)",
+              description: "Beef bone marrow soup, special size with extra meat.",
+              price: 199.0,
+            },
+          ],
+        },
+      },
     ],
   },
 };
