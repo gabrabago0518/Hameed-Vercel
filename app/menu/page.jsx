@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "../../lib/prisma.js";
 import { getCurrentUser } from "../../lib/session.js";
 import AddToCartButton from "./AddToCartButton.jsx";
+import AddToCartWithOptions from "./AddToCartWithOptions.jsx";
 
 export default async function MenuPage() {
   const user = await getCurrentUser();
@@ -15,7 +16,10 @@ export default async function MenuPage() {
             // label, no Add button below) rather than being filtered out
             // here — customers can see the item exists, just can't order it
             // right now. Staff toggle isAvailable from /staff/menu.
-            include: { addons: true },
+            include: {
+              addons: true,
+              variantGroups: { orderBy: { sortOrder: "asc" }, include: { options: { orderBy: { sortOrder: "asc" } } } },
+            },
           },
         },
       },
@@ -69,7 +73,7 @@ export default async function MenuPage() {
                     <p className="mt-1 text-sm text-zinc-600">{item.description}</p>
                   )}
                 </div>
-                <div className="mt-4 flex items-center justify-between">
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-y-3">
                   <span className="font-semibold text-red-600">
                     ₱{Number(item.price).toFixed(2)}
                   </span>
@@ -82,7 +86,29 @@ export default async function MenuPage() {
                       Add
                     </button>
                   ) : user ? (
-                    <AddToCartButton menuItemId={item.id} itemName={item.name} />
+                    item.addons.length > 0 || item.variantGroups.length > 0 ? (
+                      <AddToCartWithOptions
+                        menuItemId={item.id}
+                        itemName={item.name}
+                        addons={item.addons.map((addon) => ({
+                          id: addon.id,
+                          name: addon.name,
+                          price: Number(addon.price),
+                        }))}
+                        variantGroups={item.variantGroups.map((group) => ({
+                          id: group.id,
+                          name: group.name,
+                          required: group.required,
+                          options: group.options.map((option) => ({
+                            id: option.id,
+                            name: option.name,
+                            priceDelta: Number(option.priceDelta),
+                          })),
+                        }))}
+                      />
+                    ) : (
+                      <AddToCartButton menuItemId={item.id} itemName={item.name} />
+                    )
                   ) : (
                     <Link
                       href="/login"

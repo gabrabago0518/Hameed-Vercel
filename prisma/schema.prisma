@@ -139,13 +139,16 @@ model MenuItem {
   isAvailable Boolean  @default(true)
   createdAt   DateTime @default(now())
 
-  category   MenuCategory @relation(fields: [categoryId], references: [id])
-  addons     ItemAddon[]
-  orderItems OrderItem[]
+  category      MenuCategory       @relation(fields: [categoryId], references: [id])
+  addons        ItemAddon[]
+  variantGroups ItemVariantGroup[]
+  orderItems    OrderItem[]
 
   @@map("menu_items")
 }
 
+// Multi-pick extras with their own price, e.g. "Extra Rice" (+₱25). A
+// customer can choose any number of these, or none.
 model ItemAddon {
   id         String  @id @default(cuid())
   menuItemId String
@@ -156,6 +159,41 @@ model ItemAddon {
   orderItemAddons OrderItemAddon[]
 
   @@map("item_addons")
+}
+
+// Pick-one choices, e.g. a "Spice Level" group with "Spicy"/"Original"
+// options — distinct from ItemAddon (multi-pick) since exactly one option
+// must be chosen per group (see ItemVariantGroup.required) rather than any
+// number of them.
+model ItemVariantGroup {
+  id         String  @id @default(cuid())
+  menuItemId String
+  name       String
+  // Every group seeded so far is required (a customer must pick one option
+  // before adding the item to their cart) — this exists for a future
+  // optional group without needing a schema change to add it.
+  required   Boolean @default(true)
+  sortOrder  Int     @default(0)
+
+  menuItem MenuItem            @relation(fields: [menuItemId], references: [id])
+  options  ItemVariantOption[]
+
+  @@map("item_variant_groups")
+}
+
+model ItemVariantOption {
+  id         String  @id @default(cuid())
+  groupId    String
+  name       String
+  // Most variant options (like Spicy/Original) don't change the price —
+  // defaults to 0 rather than being required, unlike ItemAddon.price.
+  priceDelta Decimal @default(0) @db.Decimal(10, 2)
+  sortOrder  Int     @default(0)
+
+  group               ItemVariantGroup             @relation(fields: [groupId], references: [id])
+  orderItemSelections OrderItemVariantSelection[]
+
+  @@map("item_variant_options")
 }
 
 // ---------- Orders ----------
@@ -209,9 +247,10 @@ model OrderItem {
   unitPrice  Decimal @db.Decimal(10, 2)
   notes      String?
 
-  order    Order            @relation(fields: [orderId], references: [id])
-  menuItem MenuItem         @relation(fields: [menuItemId], references: [id])
-  addons   OrderItemAddon[]
+  order             Order                        @relation(fields: [orderId], references: [id])
+  menuItem          MenuItem                     @relation(fields: [menuItemId], references: [id])
+  addons            OrderItemAddon[]
+  variantSelections OrderItemVariantSelection[]
 
   @@map("order_items")
 }
@@ -227,6 +266,24 @@ model OrderItemAddon {
   addon     ItemAddon @relation(fields: [addonId], references: [id])
 
   @@map("order_item_addons")
+}
+
+// The pick-one choice actually made for this order item (e.g. "Spicy"),
+// same relationship to ItemVariantOption that OrderItemAddon has to
+// ItemAddon. priceDelta is snapshotted at order time for the same reason
+// OrderItemAddon.unitPrice is; the option's name is read live via the
+// variantOption relation rather than also snapshotted, matching
+// OrderItemAddon's own choice not to snapshot the addon's name.
+model OrderItemVariantSelection {
+  id              String  @id @default(cuid())
+  orderItemId     String
+  variantOptionId String
+  priceDelta      Decimal @db.Decimal(10, 2)
+
+  orderItem     OrderItem         @relation(fields: [orderItemId], references: [id])
+  variantOption ItemVariantOption @relation(fields: [variantOptionId], references: [id])
+
+  @@map("order_item_variant_selections")
 }
 
 // Kept separate from Order.status so the tracking UI can show the full

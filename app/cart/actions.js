@@ -23,10 +23,35 @@ export async function addToCartAction(formData) {
   // but that's UI only — enforce it here too so a direct request can't add
   // one anyway (same "don't just hide it in the UI" rule this app already
   // follows for login/profile gating above).
-  const menuItem = await prisma.menuItem.findUnique({ where: { id: menuItemId } });
+  const menuItem = await prisma.menuItem.findUnique({
+    where: { id: menuItemId },
+    include: { addons: true, variantGroups: { include: { options: true } } },
+  });
   if (!menuItem || !menuItem.isAvailable) return;
 
-  await addToCart(menuItemId, 1);
+  // Same reasoning: the menu's choice picker already only lets a customer
+  // submit addon ids that belong to this item and a variant option that
+  // belongs to one of its groups, but a direct request could send anything —
+  // validate against the item's own live addons/variantGroups rather than
+  // trusting the submitted ids.
+  const validAddonIds = new Set(menuItem.addons.map((addon) => addon.id));
+  const addonIds = formData.getAll("addonIds").map(String).filter((id) => validAddonIds.has(id));
+
+  const requestedVariantOptionId = formData.get("variantOptionId")?.toString() || null;
+  let variantOptionId = null;
+  for (const group of menuItem.variantGroups) {
+    const option = group.options.find((o) => o.id === requestedVariantOptionId);
+    if (option) {
+      variantOptionId = option.id;
+      break;
+    }
+    // A required group with no valid option chosen means this submission is
+    // incomplete (e.g. tampered with, or a genuine UI bug) — refuse the add
+    // rather than silently adding the item without the choice it requires.
+    if (group.required) return;
+  }
+
+  await addToCart(menuItemId, 1, { addonIds, variantOptionId });
   revalidatePath("/cart");
   revalidatePath("/menu");
 }
@@ -37,11 +62,11 @@ export async function updateCartQuantityAction(formData) {
     redirect("/login");
   }
 
-  const menuItemId = formData.get("menuItemId")?.toString();
+  const lineId = formData.get("lineId")?.toString();
   const quantity = Number(formData.get("quantity"));
-  if (!menuItemId || Number.isNaN(quantity)) return;
+  if (!lineId || Number.isNaN(quantity)) return;
 
-  await setCartQuantity(menuItemId, quantity);
+  await setCartQuantity(lineId, quantity);
   revalidatePath("/cart");
 }
 
@@ -51,9 +76,9 @@ export async function removeFromCartAction(formData) {
     redirect("/login");
   }
 
-  const menuItemId = formData.get("menuItemId")?.toString();
-  if (!menuItemId) return;
+  const lineId = formData.get("lineId")?.toString();
+  if (!lineId) return;
 
-  await removeFromCart(menuItemId);
+  await removeFromCart(lineId);
   revalidatePath("/cart");
 }
