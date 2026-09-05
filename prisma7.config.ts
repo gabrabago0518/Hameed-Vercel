@@ -3,12 +3,25 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
+// `prisma migrate deploy` acquires a Postgres advisory lock before running
+// (to stop two concurrent deploys from migrating at once) — that lock is
+// session-scoped, but Neon's pooled/PgBouncer endpoint (the "-pooler"
+// hostname in DATABASE_URL) can hand different statements to different
+// physical connections, which breaks it. Hit this directly: a production
+// deploy failed with `P1002 ... Timed out trying to acquire a postgres
+// advisory lock`. Both Prisma's and Neon's own docs recommend exactly this
+// fix — point the CLI (migrate/generate/studio) at Neon's *direct*
+// (non-pooled) connection string via a separate DIRECT_URL env var, while
+// lib/prisma.js keeps using the pooled DATABASE_URL for the app's own
+// runtime queries, where pooling is actually wanted (many short-lived
+// serverless function invocations). This file is the only thing that reads
+// DIRECT_URL — the app itself never touches it.
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    url: process.env["DIRECT_URL"] || process.env["DATABASE_URL"],
   },
 });
