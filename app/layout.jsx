@@ -1,4 +1,4 @@
-import { Anton, Inter } from "next/font/google";
+import { Poppins, Inter } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
 import Header from "./components/Header.jsx";
 import Footer from "./components/Footer.jsx";
@@ -10,13 +10,16 @@ import { getCartDetails } from "../lib/cart.js";
 import { getCurrentUser } from "../lib/session.js";
 import "./globals.css";
 
-// Anton for headings, per brand request — a bold, condensed display face
-// that reads well at hero-carousel size. Anton only ships one weight (400),
-// which is already heavy enough to work as a "bold" heading font on its own.
-const anton = Anton({
-  variable: "--font-anton",
+// Poppins for every bold-weight element site-wide, per request (headings,
+// prices, buttons — anything currently rendered in a bold/semibold weight).
+// Replaces Anton as --font-heading; Anton is no longer used anywhere.
+// Weights 600/700/800 cover Tailwind's font-semibold/font-bold utilities
+// plus heading-sized text, matching this app's earlier Poppins usage before
+// the Anton switch.
+const poppins = Poppins({
+  variable: "--font-poppins",
   subsets: ["latin"],
-  weight: ["400"],
+  weight: ["600", "700", "800"],
 });
 
 const inter = Inter({
@@ -35,7 +38,7 @@ export default async function RootLayout({ children }) {
   return (
     <html
       lang="en"
-      className={`${anton.variable} ${inter.variable} h-full antialiased`}
+      className={`${poppins.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
         {/* Thin progress bar across the top of the screen on every page
