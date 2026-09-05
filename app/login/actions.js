@@ -42,9 +42,10 @@ export async function loginAction(prevState, formData) {
 
   // Every new signup now reaches login with zero addresses (signup no
   // longer collects one) — send them to onboarding before the main app.
-  // An older account that already has one just goes straight to /account.
+  // An older account that already has one just goes straight to the
+  // homepage, same as any other customer login.
   const addressCount = await prisma.address.count({ where: { userId: user.id } });
   if (addressCount === 0) redirect("/onboarding/address");
 
-  redirect("/account");
+  redirect("/");
 }
