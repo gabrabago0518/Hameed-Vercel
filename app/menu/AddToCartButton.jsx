@@ -4,7 +4,7 @@ import { useTransition } from "react";
 import { addToCartAction } from "../cart/actions.js";
 import { useToast } from "../components/ToastContext.jsx";
 import { useCartUI } from "../components/CartUIContext.jsx";
-import LogoSpinner from "../components/LogoSpinner.jsx";
+import LoadingOverlay from "../components/LoadingOverlay.jsx";
 
 export default function AddToCartButton({ menuItemId, itemName }) {
   const [isPending, startTransition] = useTransition();
@@ -30,13 +30,16 @@ export default function AddToCartButton({ menuItemId, itemName }) {
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      disabled={isPending}
-      className="flex min-w-16 items-center justify-center rounded-full bg-red-600 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-60"
-    >
-      {isPending ? <LogoSpinner size={18} /> : "Add"}
-    </button>
+    <>
+      {isPending && <LoadingOverlay />}
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={isPending}
+        className="rounded-full bg-red-600 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-60"
+      >
+        Add
+      </button>
+    </>
   );
 }
