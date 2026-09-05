@@ -18,7 +18,10 @@ export default function CartPanel({ items, total }) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-y-0 right-0 z-40 flex w-full max-w-sm flex-col bg-white p-6 shadow-xl">
+    // top-20 matches the header's own height (py-4 padding + its h-12 logo
+    // = 5rem/80px) so this panel starts right below it instead of covering
+    // it - update this if the header's height ever changes again.
+    <div className="fixed top-20 right-0 bottom-0 z-40 flex w-full max-w-sm flex-col bg-white p-6 shadow-xl">
       <div className="flex items-center justify-between">
         <h2 className="font-[family-name:var(--font-heading)] text-lg font-bold text-zinc-900">
           Your cart
