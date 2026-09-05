@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "../../../../lib/prisma.js";
 import { STATUS_LABELS, PAYMENT_METHOD_LABELS } from "../../../../lib/orderStatus.js";
+import { getOrderItemLineTotal, getOrderItemChoiceLabels } from "../../../../lib/orderItemDisplay.js";
 import { verifyCodOrderAction, setOrderStatusAction } from "../actions.js";
 
 const STATUS_OPTIONS = Object.keys(STATUS_LABELS);
@@ -13,7 +14,13 @@ export default async function AdminOrderDetailPage({ params, searchParams }) {
   const order = await prisma.order.findUnique({
     where: { id },
     include: {
-      items: { include: { menuItem: true, addons: { include: { addon: true } } } },
+      items: {
+        include: {
+          menuItem: true,
+          addons: { include: { addon: true } },
+          variantSelections: { include: { variantOption: true } },
+        },
+      },
       branch: true,
       address: true,
       payment: { include: { codVerifiedBy: true } },
@@ -88,22 +95,22 @@ export default async function AdminOrderDetailPage({ params, searchParams }) {
       <section className="mt-4 rounded-2xl border border-zinc-200 bg-white p-5">
         <h2 className="mb-3 text-sm font-semibold text-zinc-700">Items</h2>
         <div className="flex flex-col gap-2 text-sm">
-          {order.items.map((item) => (
-            <div key={item.id} className="flex justify-between">
-              <span className="text-zinc-700">
-                {item.quantity} × {item.menuItem.name}
-                {item.addons.length > 0 && (
-                  <span className="text-zinc-400">
-                    {" "}
-                    ({item.addons.map((a) => a.addon.name).join(", ")})
-                  </span>
-                )}
-              </span>
-              <span className="font-medium text-zinc-900">
-                ₱{(Number(item.unitPrice) * item.quantity).toFixed(2)}
-              </span>
-            </div>
-          ))}
+          {order.items.map((item) => {
+            const choices = getOrderItemChoiceLabels(item);
+            return (
+              <div key={item.id} className="flex justify-between">
+                <span className="text-zinc-700">
+                  {item.quantity} × {item.menuItem.name}
+                  {choices.length > 0 && (
+                    <span className="text-zinc-400"> ({choices.join(", ")})</span>
+                  )}
+                </span>
+                <span className="font-medium text-zinc-900">
+                  ₱{getOrderItemLineTotal(item).toFixed(2)}
+                </span>
+              </div>
+            );
+          })}
         </div>
         <div className="mt-3 flex justify-between border-t border-zinc-100 pt-3 text-sm font-semibold">
           <span>Total</span>

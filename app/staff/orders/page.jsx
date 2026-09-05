@@ -8,6 +8,7 @@ import {
 import { advanceOrderStatusAction, verifyCodOrderAction } from "../actions.js";
 import StaffOrdersPoller from "../StaffOrdersPoller.jsx";
 import RefreshButton from "../RefreshButton.jsx";
+import { getOrderItemChoiceLabels } from "../../../lib/orderItemDisplay.js";
 
 // The four filter tabs the staff asked for, plus "All" as the default —
 // grouped from the real OrderStatus enum values (see lib/orderStatus.js).
@@ -43,7 +44,13 @@ export default async function StaffOrdersPage({ searchParams }) {
       include: {
         user: true,
         payment: true,
-        items: { include: { menuItem: true } },
+        items: {
+          include: {
+            menuItem: true,
+            addons: { include: { addon: true } },
+            variantSelections: { include: { variantOption: true } },
+          },
+        },
       },
     }),
     prisma.order.count(),
@@ -121,11 +128,17 @@ export default async function StaffOrdersPage({ searchParams }) {
                     <td className="px-4 py-3 text-zinc-700">{order.user.name}</td>
                     <td className="px-4 py-3 text-zinc-700">
                       <ul className="space-y-0.5">
-                        {order.items.map((item) => (
-                          <li key={item.id}>
-                            {item.quantity} × {item.menuItem.name}
-                          </li>
-                        ))}
+                        {order.items.map((item) => {
+                          const choices = getOrderItemChoiceLabels(item);
+                          return (
+                            <li key={item.id}>
+                              {item.quantity} × {item.menuItem.name}
+                              {choices.length > 0 && (
+                                <span className="text-zinc-500"> ({choices.join(", ")})</span>
+                              )}
+                            </li>
+                          );
+                        })}
                       </ul>
                     </td>
                     <td className="px-4 py-3 font-medium text-zinc-900">

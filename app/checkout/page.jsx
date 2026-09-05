@@ -67,12 +67,14 @@ export default async function CheckoutPage({ searchParams }) {
         </h2>
         <div className="mt-3 flex flex-col gap-2 text-sm">
           {items.map((item) => (
-            <div key={item.id} className="flex justify-between">
+            <div key={item.lineId} className="flex justify-between">
               <span className="text-zinc-700">
                 {item.quantity} × {item.name}
+                {item.variant && ` (${item.variant.optionName})`}
+                {item.addons.length > 0 && ` + ${item.addons.map((a) => a.name).join(", ")}`}
               </span>
               <span className="font-medium text-zinc-900">
-                ₱{(item.price * item.quantity).toFixed(2)}
+                ₱{(item.unitPrice * item.quantity).toFixed(2)}
               </span>
             </div>
           ))}

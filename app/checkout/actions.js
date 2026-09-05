@@ -111,7 +111,29 @@ export async function placeOrderAction(formData) {
         create: items.map((item) => ({
           menuItem: { connect: { id: item.id } },
           quantity: item.quantity,
+          // The bare menu item price — chosen addons/variant are priced
+          // separately below, itemized, rather than folded into one blended
+          // number, so a receipt/kitchen ticket can show exactly what each
+          // part cost.
           unitPrice: item.price,
+          addons: item.addons.length
+            ? {
+                create: item.addons.map((addon) => ({
+                  addon: { connect: { id: addon.id } },
+                  unitPrice: addon.price,
+                })),
+              }
+            : undefined,
+          variantSelections: item.variant
+            ? {
+                create: [
+                  {
+                    variantOption: { connect: { id: item.variant.optionId } },
+                    priceDelta: item.variant.priceDelta,
+                  },
+                ],
+              }
+            : undefined,
         })),
       },
       statusHistory: {

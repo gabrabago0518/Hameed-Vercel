@@ -39,15 +39,23 @@ export default function CartPanel({ items, total }) {
         ) : (
           <div className="flex flex-col gap-4">
             {items.map((item) => (
-              <div key={item.id} className="flex items-center justify-between gap-2">
+              <div key={item.lineId} className="flex items-center justify-between gap-2">
                 <div>
                   <p className="text-sm font-semibold text-zinc-900">{item.name}</p>
-                  <p className="text-xs text-zinc-500">₱{item.price.toFixed(2)} each</p>
+                  {item.variant && (
+                    <p className="text-xs text-zinc-500">{item.variant.optionName}</p>
+                  )}
+                  {item.addons.map((addon) => (
+                    <p key={addon.id} className="text-xs text-zinc-500">
+                      + {addon.name}
+                    </p>
+                  ))}
+                  <p className="text-xs text-zinc-500">₱{item.unitPrice.toFixed(2)} each</p>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <form action={updateCartQuantityAction}>
-                    <input type="hidden" name="menuItemId" value={item.id} />
+                    <input type="hidden" name="lineId" value={item.lineId} />
                     <input type="hidden" name="quantity" value={item.quantity - 1} />
                     <button
                       type="submit"
@@ -62,7 +70,7 @@ export default function CartPanel({ items, total }) {
                   </span>
 
                   <form action={updateCartQuantityAction}>
-                    <input type="hidden" name="menuItemId" value={item.id} />
+                    <input type="hidden" name="lineId" value={item.lineId} />
                     <input type="hidden" name="quantity" value={item.quantity + 1} />
                     <button
                       type="submit"
@@ -73,11 +81,11 @@ export default function CartPanel({ items, total }) {
                   </form>
 
                   <span className="ml-1 w-14 text-right text-sm font-semibold text-zinc-900">
-                    ₱{(item.price * item.quantity).toFixed(2)}
+                    ₱{(item.unitPrice * item.quantity).toFixed(2)}
                   </span>
 
                   <form action={removeFromCartAction}>
-                    <input type="hidden" name="menuItemId" value={item.id} />
+                    <input type="hidden" name="lineId" value={item.lineId} />
                     <button
                       type="submit"
                       className="text-xs text-zinc-400 hover:text-red-600"
