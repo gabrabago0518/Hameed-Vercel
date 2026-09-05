@@ -3,12 +3,14 @@
 // environments like Neon where a plain terminal script can't reach the
 // database directly) can reuse it instead of duplicating it.
 //
-// This is the full menu as of the request that removed every earlier
-// placeholder item/category. A brand-new database seeded from this file
-// starts directly with the real menu below — there's no order history to
-// preserve on a fresh database, so (unlike the one-off migration that
-// updated the already-seeded live database) nothing here needs the
-// retire-instead-of-delete treatment.
+// This is the full menu, corrected against real photos of the in-store menu
+// boards (Chicken Atbp./Sizzling Java Rice Menu, Silog Meals/Combo Meals) —
+// several prices/items/categories here were placeholder guesses before that
+// didn't match what's actually posted in the store. A brand-new database
+// seeded from this file starts directly with this real menu — there's no
+// order history to preserve on a fresh database, so (unlike the one-off
+// migration that corrected the already-seeded live database) nothing here
+// needs the retire-instead-of-delete treatment.
 const WING_FLAVOR_OPTIONS = [
   { name: "Spicy Buffalo (Best by Hameed)", sortOrder: 0 },
   { name: "Spicy Salted Egg", sortOrder: 1 },
@@ -19,9 +21,9 @@ const WING_FLAVOR_OPTIONS = [
   { name: "Teriyaki", sortOrder: 6 },
 ];
 
-// Applies to every Silog Meals item — turns any silog into a "pastil silog"
-// for a flat +₱20.
-const ADDITION_PASTIL_ADDON = { name: "Addition Pastil", price: 20.0 };
+// Applies to every Silog Meals item — turns any silog into a "pastil silog".
+// ₱35, matching the in-store board (was guessed at ₱20 before that photo).
+const ADDITION_PASTIL_ADDON = { name: "Addition Pastil", price: 35.0 };
 const ICED_TEA_COMBO_ADDON = { name: "Make it a Combo (+ Iced Tea)", price: 35.0 };
 
 export const restaurantSeedData = {
@@ -48,15 +50,15 @@ export const restaurantSeedData = {
         sortOrder: 0,
         menuItems: {
           create: [
-            { name: "Sizzling T-Bone Steak", price: 129.0 },
-            { name: "Sizzling Beef Burger Steak", price: 129.0 },
-            { name: "Sizzling Beef Shawarma", price: 129.0 },
-            { name: "Sizzling Garlic Pepper Beef", price: 129.0 },
-            { name: "Sizzling Chicken Fillet", price: 129.0 },
-            { name: "Sizzling Chicken Poppers", price: 129.0 },
-            { name: "Sizzling Hungarian", price: 129.0 },
-            { name: "Chicken Fillet", price: 129.0 },
-            { name: "Ala King Fillet", price: 129.0 },
+            { name: "Sizzling T-Bone Steak", price: 205.0 },
+            { name: "Sipo Egg", price: 139.0 },
+            { name: "Sizzling Beef Burger Steak", price: 139.0 },
+            { name: "Sizzling Beef Shawarma", price: 139.0 },
+            { name: "Sizzling Garlic Pepper Beef", price: 139.0 },
+            { name: "Sweet & Sour", price: 139.0 },
+            { name: "Sizzling Chicken Fillet", price: 139.0 },
+            { name: "Sizzling Chicken Poppers", price: 139.0 },
+            { name: "Sizzling Hungarian Sausage", price: 139.0 },
           ],
         },
       },
@@ -189,8 +191,19 @@ export const restaurantSeedData = {
         },
       },
       {
-        name: "Combo Meals",
+        name: "Special Fillet Series",
         sortOrder: 3,
+        menuItems: {
+          create: [
+            { name: "Chicken Fillet", price: 139.0 },
+            { name: "Ala King", price: 139.0 },
+            { name: "Cheesy Fillet", price: 139.0 },
+          ],
+        },
+      },
+      {
+        name: "Combo Meals",
+        sortOrder: 4,
         menuItems: {
           create: [
             {
@@ -203,7 +216,7 @@ export const restaurantSeedData = {
             { name: "Bangsilog Combo", price: 105.0 },
             { name: "Longsilog Combo", price: 100.0 },
             { name: "Hotsilog Combo", price: 95.0 },
-            { name: "Spamsilog Combo", price: 90.0 },
+            { name: "Spamsilog Combo", price: 95.0 },
             { name: "Siomaisilog Combo", price: 85.0 },
             { name: "Shanghaisilog Combo", price: 85.0 },
             { name: "Embotidosilog Combo", price: 85.0 },
@@ -211,26 +224,19 @@ export const restaurantSeedData = {
         },
       },
       {
-        name: "Also Available",
-        sortOrder: 4,
+        name: "Soup",
+        sortOrder: 5,
         menuItems: {
           create: [
             {
-              name: "Pares",
+              name: "Beef Pares",
               description: "Braised beef stew served with garlic rice.",
-              // Matches the real price shown on the "Hameed Pure Beef Soup
-              // Menu" poster, not the old ₱99 placeholder.
               price: 60.0,
             },
             {
-              name: "Bulalo (Regular)",
-              description: "Beef bone marrow soup, regular size.",
-              price: 149.0,
-            },
-            {
-              name: "Bulalo (Special)",
-              description: "Beef bone marrow soup, special size with extra meat.",
-              price: 199.0,
+              name: "Beef Bulalo",
+              description: "Beef bone marrow soup.",
+              price: 150.0,
             },
           ],
         },
