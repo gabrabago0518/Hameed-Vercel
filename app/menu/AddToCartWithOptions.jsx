@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { addToCartAction } from "../cart/actions.js";
 import { useToast } from "../components/ToastContext.jsx";
 import { useCartUI } from "../components/CartUIContext.jsx";
-import LogoSpinner from "../components/LogoSpinner.jsx";
+import LoadingOverlay from "../components/LoadingOverlay.jsx";
 
 // For a menu item with variant groups (pick exactly one, e.g. Spice Level)
 // and/or addons (pick any number, e.g. Extra Rice) — the plain one-click
@@ -79,6 +79,7 @@ export default function AddToCartWithOptions({ menuItemId, itemName, addons, var
 
   return (
     <div className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+      {isPending && <LoadingOverlay />}
       {variantGroups.map((group) => (
         <fieldset key={group.id} className="mb-3 last:mb-0">
           <legend className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-500">
@@ -136,9 +137,9 @@ export default function AddToCartWithOptions({ menuItemId, itemName, addons, var
           type="button"
           onClick={handleConfirm}
           disabled={!canAdd || isPending}
-          className="flex min-h-9 flex-1 items-center justify-center rounded-full bg-red-600 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="min-h-9 flex-1 rounded-full bg-red-600 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isPending ? <LogoSpinner size={18} /> : "Add to Cart"}
+          Add to Cart
         </button>
         <button
           type="button"
