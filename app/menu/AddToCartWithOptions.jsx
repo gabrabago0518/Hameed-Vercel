@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { addToCartAction } from "../cart/actions.js";
 import { useToast } from "../components/ToastContext.jsx";
 import { useCartUI } from "../components/CartUIContext.jsx";
+import LogoSpinner from "../components/LogoSpinner.jsx";
 
 // For a menu item with variant groups (pick exactly one, e.g. Spice Level)
 // and/or addons (pick any number, e.g. Extra Rice) — the plain one-click
@@ -135,9 +136,9 @@ export default function AddToCartWithOptions({ menuItemId, itemName, addons, var
           type="button"
           onClick={handleConfirm}
           disabled={!canAdd || isPending}
-          className="min-h-9 flex-1 rounded-full bg-red-600 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex min-h-9 flex-1 items-center justify-center rounded-full bg-red-600 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isPending ? "Adding..." : "Add to Cart"}
+          {isPending ? <LogoSpinner size={18} /> : "Add to Cart"}
         </button>
         <button
           type="button"

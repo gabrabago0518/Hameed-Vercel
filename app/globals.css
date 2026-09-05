@@ -33,3 +33,18 @@ body {
 .font-semibold {
   font-family: var(--font-heading);
 }
+
+/* Branded loading spinner (LogoSpinner.jsx) — the logo flips end-over-end
+   on its vertical axis while an action (e.g. Add to Cart) is in flight. */
+@keyframes logo-flip {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(360deg);
+  }
+}
+
+.animate-logo-flip {
+  animation: logo-flip 1s linear infinite;
+}
