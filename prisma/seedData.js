@@ -2,6 +2,28 @@
 // its own module so app/api/setup/route.js (which needs the same data, for
 // environments like Neon where a plain terminal script can't reach the
 // database directly) can reuse it instead of duplicating it.
+//
+// This is the full menu as of the request that removed every earlier
+// placeholder item/category. A brand-new database seeded from this file
+// starts directly with the real menu below — there's no order history to
+// preserve on a fresh database, so (unlike the one-off migration that
+// updated the already-seeded live database) nothing here needs the
+// retire-instead-of-delete treatment.
+const WING_FLAVOR_OPTIONS = [
+  { name: "Spicy Buffalo (Best by Hameed)", sortOrder: 0 },
+  { name: "Spicy Salted Egg", sortOrder: 1 },
+  { name: "Burning Wings", sortOrder: 2 },
+  { name: "Soy Garlic", sortOrder: 3 },
+  { name: "Hickory BBQ", sortOrder: 4 },
+  { name: "Garlic Parmesan", sortOrder: 5 },
+  { name: "Teriyaki", sortOrder: 6 },
+];
+
+// Applies to every Silog Meals item — turns any silog into a "pastil silog"
+// for a flat +₱20.
+const ADDITION_PASTIL_ADDON = { name: "Addition Pastil", price: 20.0 };
+const ICED_TEA_COMBO_ADDON = { name: "Make it a Combo (+ Iced Tea)", price: 35.0 };
+
 export const restaurantSeedData = {
   name: "Hameed the Love Recipe",
   description: "Filipino-style fast food, delivered fast.",
@@ -22,18 +44,95 @@ export const restaurantSeedData = {
   menuCategories: {
     create: [
       {
-        name: "Signature",
+        name: "Sizzling Platter",
         sortOrder: 0,
         menuItems: {
           create: [
+            { name: "Sizzling T-Bone Steak", price: 129.0 },
+            { name: "Sizzling Beef Burger Steak", price: 129.0 },
+            { name: "Sizzling Beef Shawarma", price: 129.0 },
+            { name: "Sizzling Garlic Pepper Beef", price: 129.0 },
+            { name: "Sizzling Chicken Fillet", price: 129.0 },
+            { name: "Sizzling Chicken Poppers", price: 129.0 },
+            { name: "Sizzling Hungarian", price: 129.0 },
+            { name: "Chicken Fillet", price: 129.0 },
+            { name: "Ala King Fillet", price: 129.0 },
+          ],
+        },
+      },
+      {
+        name: "Silog Meals",
+        sortOrder: 1,
+        menuItems: {
+          create: [
             {
-              name: "Pastil",
-              description:
-                "Steamed rice topped with savory shredded chicken, wrapped in banana leaf — our most-loved dish.",
-              price: 65.0,
-              addons: {
-                create: [{ name: "Combo (2 Rice + Pastil)", price: 90.0 }],
-              },
+              name: "Tapsilog",
+              description: "Beef tapa with garlic rice and a fried egg.",
+              price: 85.0,
+              addons: { create: [ICED_TEA_COMBO_ADDON, ADDITION_PASTIL_ADDON] },
+            },
+            {
+              name: "Chicsilog",
+              description: "Fried chicken with garlic rice and a fried egg.",
+              price: 85.0,
+              addons: { create: [ICED_TEA_COMBO_ADDON, ADDITION_PASTIL_ADDON] },
+            },
+            {
+              name: "Bangsilog",
+              description: "Fried milkfish (bangus) with garlic rice and a fried egg.",
+              price: 90.0,
+              addons: { create: [ICED_TEA_COMBO_ADDON, ADDITION_PASTIL_ADDON] },
+            },
+            {
+              name: "Longsilog",
+              description: "Sweet Filipino sausage with garlic rice and a fried egg.",
+              price: 85.0,
+              addons: { create: [ICED_TEA_COMBO_ADDON, ADDITION_PASTIL_ADDON] },
+            },
+            {
+              name: "Hotsilog",
+              description: "Spicy hotdog with garlic rice and a fried egg.",
+              price: 85.0,
+              addons: { create: [ICED_TEA_COMBO_ADDON, ADDITION_PASTIL_ADDON] },
+            },
+            {
+              name: "Spamsilog",
+              description: "Fried SPAM with garlic rice and a fried egg.",
+              price: 80.0,
+              addons: { create: [ICED_TEA_COMBO_ADDON, ADDITION_PASTIL_ADDON] },
+            },
+            {
+              name: "Siomaisilog",
+              description: "Steamed siomai with garlic rice and a fried egg.",
+              price: 75.0,
+              addons: { create: [ICED_TEA_COMBO_ADDON, ADDITION_PASTIL_ADDON] },
+            },
+            {
+              name: "Shanghaisilog",
+              description: "Crispy Shanghai lumpia with garlic rice and a fried egg.",
+              price: 75.0,
+              addons: { create: [ICED_TEA_COMBO_ADDON, ADDITION_PASTIL_ADDON] },
+            },
+            {
+              name: "Embotidosilog",
+              description: "Embotido (Filipino meatloaf) with garlic rice and a fried egg.",
+              price: 75.0,
+              addons: { create: [ICED_TEA_COMBO_ADDON, ADDITION_PASTIL_ADDON] },
+            },
+          ],
+        },
+      },
+      {
+        name: "Chicken Atbp.",
+        sortOrder: 2,
+        menuItems: {
+          create: [
+            {
+              name: "Chicken Sisig",
+              description: "Sizzling chopped chicken sisig.",
+              // Base price is the Ala Carte price; the "Serving" variant
+              // below adds the difference for W/ Rice.
+              price: 120.0,
               variantGroups: {
                 create: [
                   {
@@ -46,177 +145,69 @@ export const restaurantSeedData = {
                       ],
                     },
                   },
-                ],
-              },
-            },
-          ],
-        },
-      },
-      {
-        name: "Rice Meals",
-        sortOrder: 1,
-        menuItems: {
-          create: [
-            {
-              name: "Crispy Fried Chicken Meal",
-              description: "One-piece crispy fried chicken with rice and gravy.",
-              price: 129.0,
-              addons: {
-                create: [
-                  { name: "Extra Rice", price: 25.0 },
-                  { name: "Extra Gravy", price: 15.0 },
-                  { name: "Make it a Combo (+ Iced Tea)", price: 35.0 },
-                  { name: "Combo (2 Rice + Pastil + Egg)", price: 105.0 },
-                ],
-              },
-            },
-            {
-              name: "Beef Tapa Meal",
-              description: "Sweet and savory beef tapa with garlic rice and egg.",
-              price: 139.0,
-              addons: {
-                create: [
-                  { name: "Make it a Combo (+ Iced Tea)", price: 35.0 },
-                  { name: "Combo (2 Rice + Pastil + Egg)", price: 105.0 },
-                ],
-              },
-            },
-          ],
-        },
-      },
-      {
-        name: "Burgers",
-        sortOrder: 2,
-        menuItems: {
-          create: [
-            {
-              name: "Classic Cheeseburger",
-              description: "Beef patty, melted cheese, and special sauce.",
-              price: 89.0,
-              addons: {
-                create: [{ name: "Extra Cheese", price: 20.0 }],
-              },
-            },
-          ],
-        },
-      },
-      {
-        name: "Drinks",
-        sortOrder: 3,
-        menuItems: {
-          create: [
-            { name: "Iced Tea", price: 45.0 },
-            { name: "Bottled Water", price: 25.0 },
-          ],
-        },
-      },
-      {
-        name: "Silog Meals",
-        sortOrder: 4,
-        menuItems: {
-          create: [
-            {
-              name: "Tapsilog",
-              description: "Beef tapa with garlic rice and a fried egg.",
-              price: 79.0,
-              addons: {
-                create: [
-                  { name: "Make it a Combo (+ Iced Tea)", price: 35.0 },
-                  { name: "Combo (2 Rice + Pastil)", price: 90.0 },
-                ],
-              },
-            },
-            {
-              name: "Chicksilog",
-              description: "Fried chicken with garlic rice and a fried egg.",
-              price: 79.0,
-              addons: {
-                create: [
-                  { name: "Make it a Combo (+ Iced Tea)", price: 35.0 },
-                  { name: "Combo (2 Rice + Pastil)", price: 90.0 },
-                ],
-              },
-            },
-            {
-              name: "Longsilog",
-              description: "Sweet Filipino sausage with garlic rice and a fried egg.",
-              price: 69.0,
-              addons: {
-                create: [
-                  { name: "Make it a Combo (+ Iced Tea)", price: 35.0 },
-                  { name: "Combo (2 Rice + Pastil)", price: 90.0 },
-                ],
-              },
-            },
-            {
-              name: "Spicy Pastil Silog",
-              description: "Our signature pastil with a spicy kick, garlic rice, and a fried egg.",
-              price: 75.0,
-              addons: {
-                create: [{ name: "Combo (2 Rice + Pastil)", price: 90.0 }],
-              },
-            },
-            {
-              name: "Hotsilog",
-              description: "Spicy hotdog with garlic rice and a fried egg.",
-              price: 69.0,
-              addons: {
-                create: [
-                  { name: "Make it a Combo (+ Iced Tea)", price: 35.0 },
-                  { name: "Combo (2 Rice + Pastil)", price: 90.0 },
+                  {
+                    name: "Serving",
+                    sortOrder: 1,
+                    options: {
+                      create: [
+                        { name: "Ala Carte", sortOrder: 0 },
+                        { name: "W/ Rice", priceDelta: 10.0, sortOrder: 1 },
+                      ],
+                    },
+                  },
                 ],
               },
             },
             {
               name: "Chicken Wings",
               description: "Crispy fried chicken wings.",
-              price: 99.0,
-              addons: {
-                create: [{ name: "Combo (2 Rice + Pastil)", price: 90.0 }],
-              },
-            },
-          ],
-        },
-      },
-      {
-        name: "Also Available",
-        sortOrder: 5,
-        menuItems: {
-          create: [
-            {
-              name: "Chicken Sisig",
-              description: "Sizzling chopped chicken sisig.",
-              price: 129.0,
+              // Base price is the Ala Carte price (₱160); W/ Rice is priced
+              // lower (₱105) per the numbers given — flagged as worth
+              // double-checking since it's the reverse of Chicken Sisig's
+              // pattern (rice normally costs more, not less).
+              price: 160.0,
               variantGroups: {
                 create: [
                   {
-                    name: "Spice Level",
+                    name: "Flavor",
                     sortOrder: 0,
+                    options: { create: WING_FLAVOR_OPTIONS },
+                  },
+                  {
+                    name: "Serving",
+                    sortOrder: 1,
                     options: {
                       create: [
-                        { name: "Original", sortOrder: 0 },
-                        { name: "Spicy", sortOrder: 1 },
+                        { name: "Ala Carte", sortOrder: 0 },
+                        { name: "W/ Rice", priceDelta: -55.0, sortOrder: 1 },
                       ],
                     },
                   },
                 ],
               },
             },
+          ],
+        },
+      },
+      {
+        name: "Combo Meals",
+        sortOrder: 3,
+        menuItems: {
+          create: [
             {
-              name: "Bulalo (Regular)",
-              description: "Beef bone marrow soup, regular size.",
-              price: 149.0,
+              name: "Pastilog Combo",
+              description: "Hameed's best seller! Two cups of rice with pastil.",
+              price: 45.0,
             },
-            {
-              name: "Bulalo (Special)",
-              description: "Beef bone marrow soup, special size with extra meat.",
-              price: 199.0,
-            },
-            {
-              name: "Pares",
-              description: "Braised beef stew served with garlic rice.",
-              price: 99.0,
-            },
+            { name: "Tapsilog Combo", price: 100.0 },
+            { name: "Chicsilog Combo", price: 100.0 },
+            { name: "Bangsilog Combo", price: 105.0 },
+            { name: "Longsilog Combo", price: 100.0 },
+            { name: "Hotsilog Combo", price: 95.0 },
+            { name: "Spamsilog Combo", price: 90.0 },
+            { name: "Siomaisilog Combo", price: 85.0 },
+            { name: "Shanghaisilog Combo", price: 85.0 },
+            { name: "Embotidosilog Combo", price: 85.0 },
           ],
         },
       },

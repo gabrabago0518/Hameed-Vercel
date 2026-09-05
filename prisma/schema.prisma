@@ -137,6 +137,13 @@ model MenuItem {
   imageUrl    String?
   price       Decimal  @db.Decimal(10, 2)
   isAvailable Boolean  @default(true)
+  // Distinct from isAvailable: an unavailable item still shows on the menu
+  // (greyed out, "Out of Stock") since it might come back in stock later.
+  // A retired item is gone from the menu for good (e.g. removed from the
+  // lineup during a menu overhaul) but the row itself is kept rather than
+  // deleted, since real OrderItem rows may still reference it and deleting
+  // it would break that order's history.
+  isRetired   Boolean  @default(false)
   createdAt   DateTime @default(now())
 
   category      MenuCategory       @relation(fields: [categoryId], references: [id])

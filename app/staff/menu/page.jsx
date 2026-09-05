@@ -2,10 +2,15 @@ import { prisma } from "../../../lib/prisma.js";
 import ToggleSwitch from "./ToggleSwitch.jsx";
 
 export default async function StaffMenuPage() {
-  const categories = await prisma.menuCategory.findMany({
+  const categoriesRaw = await prisma.menuCategory.findMany({
     orderBy: { sortOrder: "asc" },
-    include: { menuItems: { orderBy: { name: "asc" } } },
+    include: { menuItems: { where: { isRetired: false }, orderBy: { name: "asc" } } },
   });
+  // A retired item is gone from the menu for good (see MenuItem.isRetired
+  // in schema.prisma) — staff shouldn't see it here to toggle availability
+  // on something that isn't orderable at all. A category left with zero
+  // remaining items (everything in it retired) is dropped too.
+  const categories = categoriesRaw.filter((category) => category.menuItems.length > 0);
 
   return (
     <div className="mx-auto w-full max-w-3xl">

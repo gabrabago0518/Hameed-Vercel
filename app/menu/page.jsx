@@ -1,8 +1,6 @@
-import Link from "next/link";
 import { prisma } from "../../lib/prisma.js";
 import { getCurrentUser } from "../../lib/session.js";
-import AddToCartButton from "./AddToCartButton.jsx";
-import AddToCartWithOptions from "./AddToCartWithOptions.jsx";
+import MenuTabs from "./MenuTabs.jsx";
 
 export default async function MenuPage() {
   const user = await getCurrentUser();
@@ -12,10 +10,13 @@ export default async function MenuPage() {
         orderBy: { sortOrder: "asc" },
         include: {
           menuItems: {
-            // Out-of-stock items stay visible (greyed out, "Out of Stock"
-            // label, no Add button below) rather than being filtered out
-            // here — customers can see the item exists, just can't order it
-            // right now. Staff toggle isAvailable from /staff/menu.
+            // Retired items (isRetired: true) are gone from the menu for
+            // good — unlike isAvailable: false, which still shows an item
+            // greyed out as "Out of Stock" since it might come back. See
+            // MenuItem.isRetired in schema.prisma for why retiring exists
+            // instead of deleting: real past orders can still reference a
+            // retired item.
+            where: { isRetired: false },
             include: {
               addons: true,
               variantGroups: { orderBy: { sortOrder: "asc" }, include: { options: { orderBy: { sortOrder: "asc" } } } },
@@ -36,8 +37,41 @@ export default async function MenuPage() {
     );
   }
 
+  // Prisma's Decimal values don't survive being passed as props from this
+  // Server Component into MenuTabs (a Client Component) — converted to
+  // plain numbers here. A category with zero remaining items (every item in
+  // it retired) is dropped entirely rather than shown as an empty tab.
+  const categories = restaurant.menuCategories
+    .map((category) => ({
+      id: category.id,
+      name: category.name,
+      items: category.menuItems.map((item) => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: Number(item.price),
+        isAvailable: item.isAvailable,
+        addons: item.addons.map((addon) => ({
+          id: addon.id,
+          name: addon.name,
+          price: Number(addon.price),
+        })),
+        variantGroups: item.variantGroups.map((group) => ({
+          id: group.id,
+          name: group.name,
+          required: group.required,
+          options: group.options.map((option) => ({
+            id: option.id,
+            name: option.name,
+            priceDelta: Number(option.priceDelta),
+          })),
+        })),
+      })),
+    }))
+    .filter((category) => category.items.length > 0);
+
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-12">
+    <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-12">
       <header className="mb-10 text-center">
         <h1 className="font-[family-name:var(--font-heading)] text-3xl font-bold text-zinc-900">
           {restaurant.name}
@@ -47,82 +81,7 @@ export default async function MenuPage() {
         )}
       </header>
 
-      {restaurant.menuCategories.map((category) => (
-        <section key={category.id} className="mb-10">
-          <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl font-semibold text-zinc-900">
-            {category.name}
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {category.menuItems.map((item) => (
-              <article
-                key={item.id}
-                className={`flex flex-col justify-between rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm ${
-                  item.isAvailable ? "" : "opacity-60 grayscale"
-                }`}
-              >
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-zinc-900">{item.name}</h3>
-                    {!item.isAvailable && (
-                      <span className="rounded-full bg-zinc-200 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-zinc-600">
-                        Out of Stock
-                      </span>
-                    )}
-                  </div>
-                  {item.description && (
-                    <p className="mt-1 text-sm text-zinc-600">{item.description}</p>
-                  )}
-                </div>
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-y-3">
-                  <span className="font-semibold text-red-600">
-                    ₱{Number(item.price).toFixed(2)}
-                  </span>
-                  {!item.isAvailable ? (
-                    <button
-                      type="button"
-                      disabled
-                      className="cursor-not-allowed rounded-full bg-zinc-300 px-4 py-1.5 text-sm font-semibold text-zinc-500"
-                    >
-                      Add
-                    </button>
-                  ) : user ? (
-                    item.addons.length > 0 || item.variantGroups.length > 0 ? (
-                      <AddToCartWithOptions
-                        menuItemId={item.id}
-                        itemName={item.name}
-                        addons={item.addons.map((addon) => ({
-                          id: addon.id,
-                          name: addon.name,
-                          price: Number(addon.price),
-                        }))}
-                        variantGroups={item.variantGroups.map((group) => ({
-                          id: group.id,
-                          name: group.name,
-                          required: group.required,
-                          options: group.options.map((option) => ({
-                            id: option.id,
-                            name: option.name,
-                            priceDelta: Number(option.priceDelta),
-                          })),
-                        }))}
-                      />
-                    ) : (
-                      <AddToCartButton menuItemId={item.id} itemName={item.name} />
-                    )
-                  ) : (
-                    <Link
-                      href="/login"
-                      className="rounded-full bg-red-600 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-red-700"
-                    >
-                      Add
-                    </Link>
-                  )}
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-      ))}
+      <MenuTabs categories={categories} hasUser={Boolean(user)} />
     </main>
   );
 }

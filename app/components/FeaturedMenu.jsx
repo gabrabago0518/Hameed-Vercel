@@ -6,27 +6,31 @@ import { prisma } from "../../lib/prisma.js";
 // price change in the menu is reflected here automatically. Image filenames
 // are looked up by a slug derived from the real item name — see the
 // public/images/menu/ note in the project's image-handling docs.
+//
+// Updated for the menu overhaul that retired/removed the previous lineup
+// (Pastil, Spicy Pastil Silog, Bulalo (Regular), Pares, Iced Tea) — picked a
+// spread across the new categories, plus the explicitly-named best seller.
 const FEATURED_ITEM_NAMES = [
-  "Pastil",
-  "Spicy Pastil Silog",
-  "Bulalo (Regular)",
-  "Pares",
+  "Pastilog Combo",
   "Chicken Sisig",
-  "Iced Tea",
+  "Chicken Wings",
+  "Bangsilog",
+  "Sizzling T-Bone Steak",
+  "Tapsilog Combo",
 ];
 
 const IMAGE_SLUGS = {
-  Pastil: "pastil",
-  "Spicy Pastil Silog": "spicy-pastil-silog",
-  "Bulalo (Regular)": "bulalo",
-  Pares: "pares",
+  "Pastilog Combo": "pastilog-combo",
   "Chicken Sisig": "chicken-sisig",
-  "Iced Tea": "iced-tea",
+  "Chicken Wings": "chicken-wings",
+  Bangsilog: "bangsilog",
+  "Sizzling T-Bone Steak": "sizzling-t-bone-steak",
+  "Tapsilog Combo": "tapsilog-combo",
 };
 
 export default async function FeaturedMenu() {
   const items = await prisma.menuItem.findMany({
-    where: { name: { in: FEATURED_ITEM_NAMES } },
+    where: { name: { in: FEATURED_ITEM_NAMES }, isRetired: false },
   });
 
   // Keep the requested display order rather than whatever order the DB
