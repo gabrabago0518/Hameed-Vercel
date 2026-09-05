@@ -38,6 +38,10 @@ const heroSlides = [
     src: "/images/hero/chicken-inasal.webp",
     alt: "Chicken Inasal",
   },
+  {
+    src: "/images/hero/chicken-sisig-promo.webp",
+    alt: "Hameed Chicken Sisig Alacarte — always available at Maharlika and New Lower Bicutan branches",
+  },
 ];
 
 export default function Home() {
