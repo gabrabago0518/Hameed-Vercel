@@ -162,9 +162,8 @@ export const restaurantSeedData = {
               name: "Chicken Wings",
               description: "Crispy fried chicken wings.",
               // Base price is the Ala Carte price (₱160); W/ Rice is priced
-              // lower (₱105) per the numbers given — flagged as worth
-              // double-checking since it's the reverse of Chicken Sisig's
-              // pattern (rice normally costs more, not less).
+              // lower (₱105) — confirmed intentional, despite being the
+              // reverse of Chicken Sisig's own pattern.
               price: 160.0,
               variantGroups: {
                 create: [

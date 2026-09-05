@@ -230,9 +230,9 @@ export async function GET(request) {
     }
 
     // Chicken Wings — same treatment, plus the Flavor variant group.
-    // Pricing note: W/ Rice (₱105) is *lower* than Ala Carte (₱160) per the
-    // numbers given — kept as-is, but flagged in the response since it's
-    // the reverse of Chicken Sisig's own Ala Carte/W Rice pattern.
+    // Pricing note: W/ Rice (₱105) is *lower* than Ala Carte (₱160) —
+    // confirmed intentional, despite being the reverse of Chicken Sisig's
+    // own Ala Carte/W Rice pattern.
     const chickenWingsResult = {};
     const chickenWings = await db.menuItem.findFirst({ where: { name: "Chicken Wings" } });
     if (chickenWings) {
