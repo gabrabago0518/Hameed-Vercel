@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { UserRound } from "lucide-react";
 import { logoutAction } from "../logout/actions.js";
@@ -11,11 +12,20 @@ export default function Header({ user, cartCount }) {
   return (
     <header className="sticky top-0 z-10 bg-red-600 shadow-md">
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-6">
-        <Link
-          href="/"
-          className="font-[family-name:var(--font-heading)] text-2xl font-bold text-white"
-        >
-          Hameed the Love Recipe
+        {/* A white silhouette of the logo (public/branding/logo-white.webp,
+            generated from the original's alpha channel) reads cleanly
+            directly on this bar's red-600 background — the original red
+            version didn't (confirmed by compositing it before shipping
+            that version), which is why a white badge was here briefly. */}
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/branding/logo-white.webp"
+            alt="Hameed the Love Recipe"
+            width={48}
+            height={48}
+            className="h-12 w-12"
+            priority
+          />
         </Link>
 
         <nav className="flex items-center gap-8">
