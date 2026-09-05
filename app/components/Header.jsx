@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { UserRound } from "lucide-react";
 import { logoutAction } from "../logout/actions.js";
@@ -11,11 +12,20 @@ export default function Header({ user, cartCount }) {
   return (
     <header className="sticky top-0 z-10 bg-red-600 shadow-md">
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-6">
-        <Link
-          href="/"
-          className="font-[family-name:var(--font-heading)] text-2xl font-bold text-white"
-        >
-          Hameed the Love Recipe
+        {/* The logo's red emblem/text nearly disappears directly on this
+            bar's red-600 background — confirmed by compositing it before
+            shipping this — so it sits on a small white badge instead of
+            plain red, keeping it visible without changing the header's
+            color. */}
+        <Link href="/" className="flex items-center rounded-full bg-white p-1.5">
+          <Image
+            src="/branding/logo.webp"
+            alt="Hameed the Love Recipe"
+            width={48}
+            height={48}
+            className="h-12 w-12"
+            priority
+          />
         </Link>
 
         <nav className="flex items-center gap-8">
