@@ -4,13 +4,12 @@ import { getCurrentUser } from "../../lib/session.js";
 import { getCartDetails } from "../../lib/cart.js";
 import { getFulfillment } from "../../lib/fulfillment.js";
 import { prisma } from "../../lib/prisma.js";
-import { setFulfillmentAction, placeOrderAction } from "./actions.js";
+import { setFulfillmentAction } from "./actions.js";
 import FulfillmentSelector from "./FulfillmentSelector.jsx";
 
 const ERROR_MESSAGES = {
   empty_cart: "Your cart is empty.",
   no_fulfillment: "Please choose delivery or pickup first.",
-  no_payment_method: "Please choose a payment method.",
 };
 
 export default async function CheckoutPage({ searchParams }) {
@@ -98,68 +97,27 @@ export default async function CheckoutPage({ searchParams }) {
         />
 
         {fulfillment && (
-          <p className="mt-4 text-sm text-zinc-600">
-            Selected:{" "}
-            <span className="font-medium text-zinc-900">
-              {fulfillment.method === "DELIVERY"
-                ? `Delivery from ${selectedBranch?.name ?? "selected branch"}`
-                : `Pickup at ${selectedBranch?.name ?? "selected branch"}`}
-            </span>
-          </p>
-        )}
-      </section>
-
-      <section className="mt-6 rounded-2xl border border-zinc-200 bg-white p-5">
-        <h2 className="font-[family-name:var(--font-heading)] text-lg font-semibold text-zinc-900">
-          How would you like to pay?
-        </h2>
-
-        {fulfillment ? (
-          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <form action={placeOrderAction}>
-              <input type="hidden" name="paymentMethod" value="QR_CODE" />
-              <button
-                type="submit"
-                className="w-full rounded-xl border border-zinc-200 p-4 text-left transition-colors hover:border-red-300"
-              >
-                <p className="font-semibold text-zinc-900">Pay via QR code</p>
-                <p className="mt-1 text-sm text-zinc-600">
-                  Scan a QR code from any bank or e-wallet app.
-                </p>
-              </button>
-            </form>
-
-            <form action={placeOrderAction}>
-              <input type="hidden" name="paymentMethod" value="GCASH" />
-              <button
-                type="submit"
-                className="w-full rounded-xl border border-zinc-200 p-4 text-left transition-colors hover:border-red-300"
-              >
-                <p className="font-semibold text-zinc-900">Pay via GCash</p>
-                <p className="mt-1 text-sm text-zinc-600">
-                  Pay using your GCash app.
-                </p>
-              </button>
-            </form>
-
-            <form action={placeOrderAction}>
-              <input type="hidden" name="paymentMethod" value="CASH_ON_DELIVERY" />
-              <button
-                type="submit"
-                className="w-full rounded-xl border border-zinc-200 p-4 text-left transition-colors hover:border-red-300"
-              >
-                <p className="font-semibold text-zinc-900">Pay with Cash</p>
-                <p className="mt-1 text-sm text-zinc-600">
-                  No online payment needed — pay when you receive your order.
-                  We&apos;ll call to confirm first.
-                </p>
-              </button>
-            </form>
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-zinc-600">
+              Selected:{" "}
+              <span className="font-medium text-zinc-900">
+                {fulfillment.method === "DELIVERY"
+                  ? `Delivery from ${selectedBranch?.name ?? "selected branch"}`
+                  : `Pickup at ${selectedBranch?.name ?? "selected branch"}`}
+              </span>
+            </p>
+            {/* Confirming the form above already redirects here on its own
+                (see setFulfillmentAction) - this link only matters if
+                someone lands back on this page (e.g. the browser's back
+                button) with fulfillment already set and doesn't touch the
+                form again. */}
+            <Link
+              href="/checkout/payment"
+              className="min-h-11 rounded-full bg-red-600 px-6 py-2 text-center text-sm font-semibold text-white transition-colors hover:bg-red-700"
+            >
+              Continue to Payment
+            </Link>
           </div>
-        ) : (
-          <p className="mt-3 text-sm text-zinc-500">
-            Choose delivery or pickup above first.
-          </p>
         )}
       </section>
     </main>

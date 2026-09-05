@@ -2,7 +2,6 @@
 
 import crypto from "node:crypto";
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "../../lib/session.js";
 import { isProfileComplete } from "../../lib/profile.js";
 import { getFulfillment, setFulfillment, clearFulfillment } from "../../lib/fulfillment.js";
@@ -42,7 +41,10 @@ export async function setFulfillmentAction(formData) {
   }
 
   await setFulfillment({ method, branchId, ...(addressId ? { addressId } : {}) });
-  revalidatePath("/checkout");
+  // By request: confirming delivery/pickup here now moves straight to the
+  // payment method step on its own page, rather than revealing a "How would
+  // you like to pay?" section further down this same one.
+  redirect("/checkout/payment");
 }
 
 function generateReference() {
@@ -67,7 +69,7 @@ export async function placeOrderAction(formData) {
 
   const paymentMethod = formData.get("paymentMethod")?.toString();
   if (!["QR_CODE", "GCASH", "CASH_ON_DELIVERY"].includes(paymentMethod)) {
-    redirect("/checkout?error=no_payment_method");
+    redirect("/checkout/payment?error=no_payment_method");
   }
   const isCod = paymentMethod === "CASH_ON_DELIVERY";
 
