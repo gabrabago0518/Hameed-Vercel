@@ -12,14 +12,14 @@ export default function Header({ user, cartCount }) {
   return (
     <header className="sticky top-0 z-10 bg-red-600 shadow-md">
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-6">
-        {/* The logo's red emblem/text nearly disappears directly on this
-            bar's red-600 background — confirmed by compositing it before
-            shipping this — so it sits on a small white badge instead of
-            plain red, keeping it visible without changing the header's
-            color. */}
-        <Link href="/" className="flex items-center rounded-full bg-white p-1.5">
+        {/* A white silhouette of the logo (public/branding/logo-white.webp,
+            generated from the original's alpha channel) reads cleanly
+            directly on this bar's red-600 background — the original red
+            version didn't (confirmed by compositing it before shipping
+            that version), which is why a white badge was here briefly. */}
+        <Link href="/" className="flex items-center">
           <Image
-            src="/branding/logo.webp"
+            src="/branding/logo-white.webp"
             alt="Hameed the Love Recipe"
             width={48}
             height={48}
