@@ -102,6 +102,7 @@ export default function AddToCartWithOptions({ menuItemId, itemName, addons, var
                 />
                 {option.name}
                 {option.priceDelta > 0 && ` (+₱${option.priceDelta.toFixed(2)})`}
+                {option.priceDelta < 0 && ` (-₱${Math.abs(option.priceDelta).toFixed(2)})`}
               </label>
             ))}
           </div>

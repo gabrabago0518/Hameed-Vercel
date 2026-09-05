@@ -5,33 +5,30 @@ import BlogSection from "./components/BlogSection.jsx";
 import CustomerGallery from "./components/CustomerGallery.jsx";
 import NewsSection from "./components/NewsSection.jsx";
 
+// The Pares and Bulalo slides that used to be here were removed — both
+// items were retired/deleted in the menu overhaul that replaced the whole
+// lineup, and the bulalo.webp poster specifically promoted both of them
+// together, so keeping either slide would have been advertising something
+// no longer orderable. The Pastil slide's copy was updated to point at
+// Pastilog Combo (its closest equivalent in the new menu) rather than
+// removed outright, since the jars photo is still Pastil-branded — flagging
+// that image is technically for the retail jar product line, not this
+// delivery item, same pre-existing mismatch noted when these photos were
+// first added. Needs new photos for Sizzling Platter/Combo Meals to fill
+// the carousel back out to its previous slide count.
 const heroSlides = [
   {
     src: "/images/hero/pastil.webp",
-    alt: "Hameed's signature Pastil",
-    title: "Order Pastil Now",
-    ctaLabel: "Order Pastil Now",
+    alt: "Hameed's Pastilog Combo",
+    title: "Order Pastilog Combo Now",
+    ctaLabel: "Order Pastilog Combo",
     ctaHref: "/menu",
   },
   {
     src: "/images/hero/silog-meals.webp",
-    alt: "Silog meals — Tapsilog, Chicksilog, and more",
+    alt: "Silog meals — Tapsilog, Chicsilog, Bangsilog, and more",
     title: "Silog Meals, Any Time of Day",
     ctaLabel: "See Silog Meals",
-    ctaHref: "/menu",
-  },
-  {
-    src: "/images/hero/pares.webp",
-    alt: "Beef Pares with garlic rice",
-    title: "Try Our Beef Pares",
-    ctaLabel: "Order Pares",
-    ctaHref: "/menu",
-  },
-  {
-    src: "/images/hero/bulalo.webp",
-    alt: "Bulalo beef bone marrow soup",
-    title: "Bulalo, Made the Slow Way",
-    ctaLabel: "Order Bulalo",
     ctaHref: "/menu",
   },
   {
