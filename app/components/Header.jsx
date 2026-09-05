@@ -25,7 +25,6 @@ export default async function Header() {
           >
             Menu
           </Link>
-          <HeaderCartButton count={cartCount} />
           {user ? (
             <div className="group relative">
               <Link
@@ -93,6 +92,7 @@ export default async function Header() {
               </Link>
             </>
           )}
+          <HeaderCartButton count={cartCount} />
         </nav>
       </div>
     </header>

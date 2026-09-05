@@ -1,7 +1,7 @@
 import { Anton, Inter } from "next/font/google";
 import Header from "./components/Header.jsx";
 import Footer from "./components/Footer.jsx";
-import FloatingCart from "./components/FloatingCart.jsx";
+import CartPanel from "./components/CartPanel.jsx";
 import ChromeGate from "./components/ChromeGate.jsx";
 import { CartUIProvider } from "./components/CartUIContext.jsx";
 import { ToastProvider } from "./components/ToastContext.jsx";
@@ -43,7 +43,7 @@ export default async function RootLayout({ children }) {
             </ChromeGate>
             {children}
             <ChromeGate>
-              <FloatingCart items={items} total={total} />
+              <CartPanel items={items} total={total} />
             </ChromeGate>
             <ChromeGate>
               <Footer />
