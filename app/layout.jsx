@@ -1,4 +1,5 @@
 import { Anton, Inter } from "next/font/google";
+import NextTopLoader from "nextjs-toploader";
 import Header from "./components/Header.jsx";
 import Footer from "./components/Footer.jsx";
 import CartPanel from "./components/CartPanel.jsx";
@@ -36,6 +37,13 @@ export default async function RootLayout({ children }) {
       className={`${anton.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
+        {/* Thin progress bar across the top of the screen on every page
+            navigation — the app's pages are all dynamic (real DB queries on
+            every request), and Neon/Vercel cold starts can make that first
+            request after idle time feel slow with no feedback otherwise.
+            Rendered unconditionally (not gated by ChromeGate) so it also
+            covers /admin and /staff navigation. */}
+        <NextTopLoader color="#dc2626" showSpinner={false} />
         <ToastProvider>
           <CartUIProvider>
             <ChromeGate>
