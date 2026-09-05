@@ -11,7 +11,7 @@ import HeaderCartButton from "./HeaderCartButton.jsx";
 export default function Header({ user, cartCount }) {
   return (
     <header className="sticky top-0 z-10 bg-red-600 shadow-md">
-      <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-6">
+      <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-4">
         {/* A white silhouette of the logo (public/branding/logo-white.webp,
             generated from the original's alpha channel) reads cleanly
             directly on this bar's red-600 background — the original red
@@ -31,7 +31,7 @@ export default function Header({ user, cartCount }) {
         <nav className="flex items-center gap-8">
           <Link
             href="/menu"
-            className="text-lg font-medium text-white/90 hover:text-white"
+            className="font-[family-name:var(--font-heading)] text-lg text-white/90 hover:text-white"
           >
             Menu
           </Link>
@@ -39,7 +39,7 @@ export default function Header({ user, cartCount }) {
             <div className="group relative">
               <Link
                 href="/account"
-                className="flex items-center gap-2 text-lg font-medium text-white/90 hover:text-white"
+                className="flex items-center gap-2 font-[family-name:var(--font-heading)] text-lg text-white/90 hover:text-white"
               >
                 <UserRound size={24} />
                 {user.name.split(" ")[0]}
@@ -89,7 +89,7 @@ export default function Header({ user, cartCount }) {
             <>
               <Link
                 href="/account"
-                className="flex items-center gap-2 text-lg font-medium text-white/90 hover:text-white"
+                className="flex items-center gap-2 font-[family-name:var(--font-heading)] text-lg text-white/90 hover:text-white"
               >
                 <UserRound size={24} />
                 Account
