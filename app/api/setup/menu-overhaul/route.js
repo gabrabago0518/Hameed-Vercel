@@ -13,10 +13,21 @@ import { prisma } from "../../../../lib/prisma.js";
 //   - Chicken Sisig / Chicken Wings / Tapsilog / Chicsilog(was Chicksilog) /
 //     Longsilog / Hotsilog are updated in place (same row, so any of them
 //     with real orders keep those intact) rather than deleted+recreated
-// Idempotent throughout (checks before every create/update), wrapped in one
-// transaction so a failure partway through leaves nothing half-changed.
+//
+// Deliberately NOT wrapped in a single prisma.$transaction: this does
+// ~100+ sequential round-trips against Neon's pooled connection, which
+// doesn't reliably finish inside a transaction's timeout window (hit this
+// directly — "Unable to start a transaction" at first, then "query cannot
+// be executed on an expired transaction" after raising that limit).
+// Instead, every step below is independently idempotent (checks before it
+// creates/updates/deletes anything), so running this as a plain sequence
+// of separate queries is actually *safer* here than one big transaction —
+// if the request times out or gets killed partway through, nothing is left
+// half-broken, and simply visiting the same URL again picks up wherever it
+// left off instead of forcing a full restart.
 // Same SETUP_SECRET gate and delete-when-done lifecycle as the other
 // one-off setup routes.
+export const maxDuration = 60;
 
 const OLD_ITEMS_TO_REMOVE = [
   "Pastil",
@@ -90,65 +101,69 @@ const COMBO_MEALS_ITEMS = [
   { name: "Embotidosilog Combo", price: 85.0 },
 ];
 
-async function deleteMenuItemTree(tx, menuItem) {
-  const groups = await tx.itemVariantGroup.findMany({
+async function deleteMenuItemTree(db, menuItem) {
+  const groups = await db.itemVariantGroup.findMany({
     where: { menuItemId: menuItem.id },
     select: { id: true },
   });
   const groupIds = groups.map((g) => g.id);
-  await tx.itemVariantOption.deleteMany({ where: { groupId: { in: groupIds } } });
-  await tx.itemVariantGroup.deleteMany({ where: { id: { in: groupIds } } });
-  await tx.itemAddon.deleteMany({ where: { menuItemId: menuItem.id } });
-  await tx.menuItem.delete({ where: { id: menuItem.id } });
+  await db.itemVariantOption.deleteMany({ where: { groupId: { in: groupIds } } });
+  await db.itemVariantGroup.deleteMany({ where: { id: { in: groupIds } } });
+  await db.itemAddon.deleteMany({ where: { menuItemId: menuItem.id } });
+  await db.menuItem.delete({ where: { id: menuItem.id } });
 }
 
-async function removeOrRetireByName(tx, name, log) {
-  const item = await tx.menuItem.findFirst({ where: { name } });
+async function removeOrRetireByName(db, name, log) {
+  const item = await db.menuItem.findFirst({ where: { name } });
   if (!item) {
     log[name] = "skipped — not found";
     return;
   }
-  const orderCount = await tx.orderItem.count({ where: { menuItemId: item.id } });
+  if (item.isRetired) {
+    log[name] = "skipped — already retired";
+    return;
+  }
+  const orderCount = await db.orderItem.count({ where: { menuItemId: item.id } });
   if (orderCount === 0) {
-    await deleteMenuItemTree(tx, item);
+    await deleteMenuItemTree(db, item);
     log[name] = "deleted (no orders reference it)";
   } else {
-    await tx.menuItem.update({ where: { id: item.id }, data: { isRetired: true } });
+    await db.menuItem.update({ where: { id: item.id }, data: { isRetired: true } });
     log[name] = `retired (${orderCount} real order item(s) reference it — kept for order history)`;
   }
 }
 
-async function ensureCategory(tx, restaurantId, name, sortOrder) {
-  const existing = await tx.menuCategory.findFirst({ where: { restaurantId, name } });
+async function ensureCategory(db, restaurantId, name, sortOrder) {
+  const existing = await db.menuCategory.findFirst({ where: { restaurantId, name } });
   if (existing) return existing;
-  return tx.menuCategory.create({ data: { restaurantId, name, sortOrder } });
+  return db.menuCategory.create({ data: { restaurantId, name, sortOrder } });
 }
 
-async function ensureVariantGroup(tx, menuItemId, groupName, sortOrder, options) {
-  const existing = await tx.itemVariantGroup.findFirst({ where: { menuItemId, name: groupName } });
+async function ensureVariantGroup(db, menuItemId, groupName, sortOrder, options) {
+  const existing = await db.itemVariantGroup.findFirst({ where: { menuItemId, name: groupName } });
   if (existing) return "already present";
-  await tx.itemVariantGroup.create({
+  await db.itemVariantGroup.create({
     data: { menuItemId, name: groupName, sortOrder, options: { create: options } },
   });
   return "added";
 }
 
-async function removeAddonsByName(tx, menuItemId, names) {
-  const result = await tx.itemAddon.deleteMany({ where: { menuItemId, name: { in: names } } });
+async function removeAddonsByName(db, menuItemId, names) {
+  const result = await db.itemAddon.deleteMany({ where: { menuItemId, name: { in: names } } });
   return result.count;
 }
 
-async function ensureAddon(tx, menuItemId, name, price) {
-  const existing = await tx.itemAddon.findFirst({ where: { menuItemId, name } });
+async function ensureAddon(db, menuItemId, name, price) {
+  const existing = await db.itemAddon.findFirst({ where: { menuItemId, name } });
   if (existing) return "already present";
-  await tx.itemAddon.create({ data: { menuItemId, name, price } });
+  await db.itemAddon.create({ data: { menuItemId, name, price } });
   return "added";
 }
 
-async function ensureMenuItem(tx, categoryId, name, price, description) {
-  const existing = await tx.menuItem.findFirst({ where: { categoryId, name } });
+async function ensureMenuItem(db, categoryId, name, price, description) {
+  const existing = await db.menuItem.findFirst({ where: { categoryId, name } });
   if (existing) return "already present";
-  await tx.menuItem.create({ data: { categoryId, name, price, description } });
+  await db.menuItem.create({ data: { categoryId, name, price, description } });
   return "created";
 }
 
@@ -159,168 +174,154 @@ export async function GET(request) {
   }
 
   try {
-    const results = await prisma.$transaction(
-      async (tx) => {
-        const restaurant = await tx.restaurant.findFirst();
-        if (!restaurant) {
-          throw new Error("No restaurant found — nothing to migrate.");
-        }
+    const db = prisma;
 
-        const removed = {};
-        for (const name of OLD_ITEMS_TO_REMOVE) {
-          await removeOrRetireByName(tx, name, removed);
-        }
+    const restaurant = await db.restaurant.findFirst();
+    if (!restaurant) {
+      throw new Error("No restaurant found — nothing to migrate.");
+    }
 
-        const emptiedCategories = {};
-        for (const name of OLD_EMPTY_CATEGORY_NAMES) {
-          const category = await tx.menuCategory.findFirst({
-            where: { restaurantId: restaurant.id, name },
-            include: { _count: { select: { menuItems: true } } },
+    const removed = {};
+    for (const name of OLD_ITEMS_TO_REMOVE) {
+      await removeOrRetireByName(db, name, removed);
+    }
+
+    const emptiedCategories = {};
+    for (const name of OLD_EMPTY_CATEGORY_NAMES) {
+      const category = await db.menuCategory.findFirst({
+        where: { restaurantId: restaurant.id, name },
+        include: { _count: { select: { menuItems: true } } },
+      });
+      if (!category) {
+        emptiedCategories[name] = "skipped — not found";
+      } else if (category._count.menuItems === 0) {
+        await db.menuCategory.delete({ where: { id: category.id } });
+        emptiedCategories[name] = "deleted (empty)";
+      } else {
+        emptiedCategories[name] = `kept — still has ${category._count.menuItems} item(s) (retired, not deleted)`;
+      }
+    }
+
+    const sizzlingCategory = await ensureCategory(db, restaurant.id, "Sizzling Platter", 6);
+    const chickenCategory = await ensureCategory(db, restaurant.id, "Chicken Atbp.", 7);
+    const comboCategory = await ensureCategory(db, restaurant.id, "Combo Meals", 8);
+
+    const sizzlingResults = {};
+    for (const name of SIZZLING_PLATTER_ITEMS) {
+      sizzlingResults[name] = await ensureMenuItem(db, sizzlingCategory.id, name, SIZZLING_PLATTER_PRICE, null);
+    }
+
+    // Chicken Sisig — move category + price, add the new Serving variant,
+    // keep its existing Spice Level variant untouched.
+    const chickenSisigResult = {};
+    const chickenSisig = await db.menuItem.findFirst({ where: { name: "Chicken Sisig" } });
+    if (chickenSisig) {
+      await db.menuItem.update({
+        where: { id: chickenSisig.id },
+        data: { categoryId: chickenCategory.id, price: 120.0 },
+      });
+      chickenSisigResult.moved = "updated category + price";
+      chickenSisigResult.servingVariant = await ensureVariantGroup(db, chickenSisig.id, "Serving", 1, [
+        { name: "Ala Carte", sortOrder: 0 },
+        { name: "W/ Rice", priceDelta: 10.0, sortOrder: 1 },
+      ]);
+    } else {
+      chickenSisigResult.moved = "skipped — not found";
+    }
+
+    // Chicken Wings — same treatment, plus the Flavor variant group.
+    // Pricing note: W/ Rice (₱105) is *lower* than Ala Carte (₱160) per the
+    // numbers given — kept as-is, but flagged in the response since it's
+    // the reverse of Chicken Sisig's own Ala Carte/W Rice pattern.
+    const chickenWingsResult = {};
+    const chickenWings = await db.menuItem.findFirst({ where: { name: "Chicken Wings" } });
+    if (chickenWings) {
+      await db.menuItem.update({
+        where: { id: chickenWings.id },
+        data: { categoryId: chickenCategory.id, price: 160.0 },
+      });
+      chickenWingsResult.moved = "updated category + price";
+      chickenWingsResult.flavorVariant = await ensureVariantGroup(db, chickenWings.id, "Flavor", 0, WING_FLAVOR_OPTIONS);
+      chickenWingsResult.servingVariant = await ensureVariantGroup(db, chickenWings.id, "Serving", 1, [
+        { name: "Ala Carte", sortOrder: 0 },
+        { name: "W/ Rice", priceDelta: -55.0, sortOrder: 1 },
+      ]);
+      const removedAddons = await removeAddonsByName(db, chickenWings.id, OLD_RICE_PASTIL_ADDON_NAMES);
+      chickenWingsResult.oldComboAddonsRemoved = removedAddons;
+    } else {
+      chickenWingsResult.moved = "skipped — not found";
+    }
+
+    // Existing Silog Meals items: rename (Chicksilog -> Chicsilog only),
+    // reprice, drop the superseded flat combo addon, add the new Addition
+    // Pastil addon. Make it a Combo (+ Iced Tea) is untouched — unrelated
+    // to this change.
+    const silogUpdates = {};
+    for (const config of SILOG_UPDATES) {
+      const item = await db.menuItem.findFirst({ where: { name: config.name } });
+      if (!item) {
+        silogUpdates[config.name] = "skipped — not found";
+        continue;
+      }
+      await db.menuItem.update({
+        where: { id: item.id },
+        data: { price: config.price, ...(config.renameTo ? { name: config.renameTo } : {}) },
+      });
+      const removedAddons = await removeAddonsByName(db, item.id, OLD_RICE_PASTIL_ADDON_NAMES);
+      const addedAddon = await ensureAddon(db, item.id, ADDITION_PASTIL_ADDON_NAME, ADDITION_PASTIL_PRICE);
+      silogUpdates[config.renameTo ?? config.name] = {
+        price: config.price,
+        oldComboAddonsRemoved: removedAddons,
+        additionPastilAddon: addedAddon,
+      };
+    }
+
+    const silogCategory = await db.menuCategory.findFirst({
+      where: { restaurantId: restaurant.id, name: "Silog Meals" },
+    });
+    const newSilogResults = {};
+    if (silogCategory) {
+      for (const config of NEW_SILOG_ITEMS) {
+        const status = await ensureMenuItem(db, silogCategory.id, config.name, config.price, config.description);
+        if (status === "created") {
+          const created = await db.menuItem.findFirst({
+            where: { categoryId: silogCategory.id, name: config.name },
           });
-          if (!category) {
-            emptiedCategories[name] = "skipped — not found";
-          } else if (category._count.menuItems === 0) {
-            await tx.menuCategory.delete({ where: { id: category.id } });
-            emptiedCategories[name] = "deleted (empty)";
-          } else {
-            emptiedCategories[name] = `kept — still has ${category._count.menuItems} item(s) (retired, not deleted)`;
-          }
+          await ensureAddon(db, created.id, ICED_TEA_COMBO_ADDON_NAME, ICED_TEA_COMBO_PRICE);
+          await ensureAddon(db, created.id, ADDITION_PASTIL_ADDON_NAME, ADDITION_PASTIL_PRICE);
         }
+        newSilogResults[config.name] = status;
+      }
+    } else {
+      for (const config of NEW_SILOG_ITEMS) {
+        newSilogResults[config.name] = "skipped — Silog Meals category not found";
+      }
+    }
 
-        const sizzlingCategory = await ensureCategory(tx, restaurant.id, "Sizzling Platter", 6);
-        const chickenCategory = await ensureCategory(tx, restaurant.id, "Chicken Atbp.", 7);
-        const comboCategory = await ensureCategory(tx, restaurant.id, "Combo Meals", 8);
+    const comboResults = {};
+    for (const config of COMBO_MEALS_ITEMS) {
+      comboResults[config.name] = await ensureMenuItem(
+        db,
+        comboCategory.id,
+        config.name,
+        config.price,
+        config.description ?? null
+      );
+    }
 
-        const sizzlingResults = {};
-        for (const name of SIZZLING_PLATTER_ITEMS) {
-          sizzlingResults[name] = await ensureMenuItem(tx, sizzlingCategory.id, name, SIZZLING_PLATTER_PRICE, null);
-        }
-
-        // Chicken Sisig — move category + price, add the new Serving
-        // variant, keep its existing Spice Level variant untouched.
-        const chickenSisigResult = {};
-        const chickenSisig = await tx.menuItem.findFirst({ where: { name: "Chicken Sisig" } });
-        if (chickenSisig) {
-          await tx.menuItem.update({
-            where: { id: chickenSisig.id },
-            data: { categoryId: chickenCategory.id, price: 120.0 },
-          });
-          chickenSisigResult.moved = "updated category + price";
-          chickenSisigResult.servingVariant = await ensureVariantGroup(tx, chickenSisig.id, "Serving", 1, [
-            { name: "Ala Carte", sortOrder: 0 },
-            { name: "W/ Rice", priceDelta: 10.0, sortOrder: 1 },
-          ]);
-        } else {
-          chickenSisigResult.moved = "skipped — not found";
-        }
-
-        // Chicken Wings — same treatment, plus the Flavor variant group.
-        // Pricing note: W/ Rice (₱105) is *lower* than Ala Carte (₱160) per
-        // the numbers given — kept as-is, but flagged in the response since
-        // it's the reverse of Chicken Sisig's own Ala Carte/W Rice pattern.
-        const chickenWingsResult = {};
-        const chickenWings = await tx.menuItem.findFirst({ where: { name: "Chicken Wings" } });
-        if (chickenWings) {
-          await tx.menuItem.update({
-            where: { id: chickenWings.id },
-            data: { categoryId: chickenCategory.id, price: 160.0 },
-          });
-          chickenWingsResult.moved = "updated category + price";
-          chickenWingsResult.flavorVariant = await ensureVariantGroup(
-            tx,
-            chickenWings.id,
-            "Flavor",
-            0,
-            WING_FLAVOR_OPTIONS
-          );
-          chickenWingsResult.servingVariant = await ensureVariantGroup(tx, chickenWings.id, "Serving", 1, [
-            { name: "Ala Carte", sortOrder: 0 },
-            { name: "W/ Rice", priceDelta: -55.0, sortOrder: 1 },
-          ]);
-          const removedAddons = await removeAddonsByName(tx, chickenWings.id, OLD_RICE_PASTIL_ADDON_NAMES);
-          chickenWingsResult.oldComboAddonsRemoved = removedAddons;
-        } else {
-          chickenWingsResult.moved = "skipped — not found";
-        }
-
-        // Existing Silog Meals items: rename (Chicksilog -> Chicsilog only),
-        // reprice, drop the superseded flat combo addon, add the new
-        // Addition Pastil addon. Make it a Combo (+ Iced Tea) is untouched
-        // — unrelated to this change.
-        const silogUpdates = {};
-        for (const config of SILOG_UPDATES) {
-          const item = await tx.menuItem.findFirst({ where: { name: config.name } });
-          if (!item) {
-            silogUpdates[config.name] = "skipped — not found";
-            continue;
-          }
-          await tx.menuItem.update({
-            where: { id: item.id },
-            data: { price: config.price, ...(config.renameTo ? { name: config.renameTo } : {}) },
-          });
-          const removedAddons = await removeAddonsByName(tx, item.id, OLD_RICE_PASTIL_ADDON_NAMES);
-          const addedAddon = await ensureAddon(tx, item.id, ADDITION_PASTIL_ADDON_NAME, ADDITION_PASTIL_PRICE);
-          silogUpdates[config.renameTo ?? config.name] = {
-            price: config.price,
-            oldComboAddonsRemoved: removedAddons,
-            additionPastilAddon: addedAddon,
-          };
-        }
-
-        const silogCategory = await tx.menuCategory.findFirst({
-          where: { restaurantId: restaurant.id, name: "Silog Meals" },
-        });
-        const newSilogResults = {};
-        if (silogCategory) {
-          for (const config of NEW_SILOG_ITEMS) {
-            const status = await ensureMenuItem(tx, silogCategory.id, config.name, config.price, config.description);
-            if (status === "created") {
-              const created = await tx.menuItem.findFirst({
-                where: { categoryId: silogCategory.id, name: config.name },
-              });
-              await ensureAddon(tx, created.id, ICED_TEA_COMBO_ADDON_NAME, ICED_TEA_COMBO_PRICE);
-              await ensureAddon(tx, created.id, ADDITION_PASTIL_ADDON_NAME, ADDITION_PASTIL_PRICE);
-            }
-            newSilogResults[config.name] = status;
-          }
-        } else {
-          for (const config of NEW_SILOG_ITEMS) {
-            newSilogResults[config.name] = "skipped — Silog Meals category not found";
-          }
-        }
-
-        const comboResults = {};
-        for (const config of COMBO_MEALS_ITEMS) {
-          comboResults[config.name] = await ensureMenuItem(
-            tx,
-            comboCategory.id,
-            config.name,
-            config.price,
-            config.description ?? null
-          );
-        }
-
-        return {
-          removedOldItems: removed,
-          emptiedCategories,
-          sizzlingPlatterItems: sizzlingResults,
-          chickenSisig: chickenSisigResult,
-          chickenWings: chickenWingsResult,
-          silogUpdates,
-          newSilogItems: newSilogResults,
-          comboMealsItems: comboResults,
-        };
+    return NextResponse.json({
+      ok: true,
+      results: {
+        removedOldItems: removed,
+        emptiedCategories,
+        sizzlingPlatterItems: sizzlingResults,
+        chickenSisig: chickenSisigResult,
+        chickenWings: chickenWingsResult,
+        silogUpdates,
+        newSilogItems: newSilogResults,
+        comboMealsItems: comboResults,
       },
-      // maxWait: how long Prisma waits to acquire a connection and actually
-      // start the transaction — separate from timeout (how long the
-      // transaction body can run once started). Neon's pooled connection
-      // can take longer than Prisma's 2s default to hand over a free
-      // connection, especially after a cold start; this is what produced
-      // "Unable to start a transaction in the given time" on the first run.
-      { maxWait: 15000, timeout: 30000 }
-    );
-
-    return NextResponse.json({ ok: true, results });
+    });
   } catch (error) {
     return NextResponse.json({ ok: false, error: error.message }, { status: 409 });
   }
