@@ -9,7 +9,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
-  --font-heading: var(--font-anton);
+  --font-heading: var(--font-poppins);
 }
 
 body {
@@ -21,4 +21,15 @@ body {
      scrollbar is present — this stops that from creating a horizontal
      scrollbar of its own. */
   overflow-x: hidden;
+}
+
+/* Every bold-weight element site-wide uses the same font as headings
+   (--font-heading, Poppins), per request — this is a plain rule outside any
+   @layer, so it wins over Tailwind's own utilities (which are layered)
+   regardless of source order. Scoped to font-bold/font-semibold specifically
+   (not font-medium) since those are the weights this app actually uses for
+   "bold" text — prices, buttons, nav labels. */
+.font-bold,
+.font-semibold {
+  font-family: var(--font-heading);
 }
