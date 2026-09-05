@@ -7,6 +7,7 @@ import ChromeGate from "./components/ChromeGate.jsx";
 import { CartUIProvider } from "./components/CartUIContext.jsx";
 import { ToastProvider } from "./components/ToastContext.jsx";
 import { getCartDetails } from "../lib/cart.js";
+import { getCurrentUser } from "../lib/session.js";
 import "./globals.css";
 
 // Anton for headings, per brand request — a bold, condensed display face
@@ -29,7 +30,7 @@ export const metadata = {
 };
 
 export default async function RootLayout({ children }) {
-  const { items, total } = await getCartDetails();
+  const [user, { items, total }] = await Promise.all([getCurrentUser(), getCartDetails()]);
 
   return (
     <html
@@ -47,12 +48,14 @@ export default async function RootLayout({ children }) {
         <ToastProvider>
           <CartUIProvider>
             <ChromeGate>
-              <Header />
+              <Header user={user} cartCount={items.reduce((sum, item) => sum + item.quantity, 0)} />
             </ChromeGate>
             {children}
-            <ChromeGate>
-              <CartPanel items={items} total={total} />
-            </ChromeGate>
+            {user && (
+              <ChromeGate>
+                <CartPanel items={items} total={total} />
+              </ChromeGate>
+            )}
             <ChromeGate>
               <Footer />
             </ChromeGate>

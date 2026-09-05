@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { UserRound } from "lucide-react";
-import { getCurrentUser } from "../../lib/session.js";
-import { getCartCount } from "../../lib/cart.js";
 import { logoutAction } from "../logout/actions.js";
 import HeaderCartButton from "./HeaderCartButton.jsx";
 
-export default async function Header() {
-  const [user, cartCount] = await Promise.all([getCurrentUser(), getCartCount()]);
-
+// user/cartCount come from the root layout now, rather than this component
+// fetching its own — the layout already needs both (for the cart panel and
+// the "hide the cart entirely when logged out" check below), so fetching
+// them a second time here would just be a duplicate query.
+export default function Header({ user, cartCount }) {
   return (
     <header className="sticky top-0 z-10 bg-red-600 shadow-md">
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-6">
@@ -92,7 +92,12 @@ export default async function Header() {
               </Link>
             </>
           )}
-          <HeaderCartButton count={cartCount} />
+          {/* No cart button at all for a logged-out visitor — they can't add
+              anything to a cart anyway (addToCartAction redirects them to
+              /login), so a cart button that can never show anything, or a
+              panel that can only ever say "Your cart is empty," is just
+              clutter. */}
+          {user && <HeaderCartButton count={cartCount} />}
         </nav>
       </div>
     </header>
