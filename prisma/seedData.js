@@ -38,7 +38,7 @@ export const restaurantSeedData = {
                     sortOrder: 0,
                     options: {
                       create: [
-                        { name: "Original (Not Spicy)", sortOrder: 0 },
+                        { name: "Original", sortOrder: 0 },
                         { name: "Spicy", sortOrder: 1 },
                       ],
                     },
@@ -169,7 +169,7 @@ export const restaurantSeedData = {
                     sortOrder: 0,
                     options: {
                       create: [
-                        { name: "Original (Not Spicy)", sortOrder: 0 },
+                        { name: "Original", sortOrder: 0 },
                         { name: "Spicy", sortOrder: 1 },
                       ],
                     },
