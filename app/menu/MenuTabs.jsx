@@ -31,7 +31,12 @@ export default function MenuTabs({ categories, hasUser }) {
 
   return (
     <div>
-      <div className="sticky top-0 z-10 -mx-6 overflow-x-auto bg-white px-6 sm:mx-0 sm:px-0">
+      {/* Not sticky — the site header is already `sticky top-0`, and a
+          second sticky-top-0 element here would land on top of it once
+          scrolled, covering the header's cart button/nav and making them
+          untappable. A plain (non-sticky) horizontally-scrollable row
+          avoids that entirely. */}
+      <div className="-mx-6 overflow-x-auto bg-white px-6 sm:mx-0 sm:px-0">
         <div className="flex min-w-max gap-6 border-b border-zinc-200 sm:gap-8">
           {categories.map((category) => (
             <button
