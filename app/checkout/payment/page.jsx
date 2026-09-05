@@ -28,7 +28,7 @@ export default async function CheckoutPaymentPage({ searchParams }) {
   // without it (a branch, an address) and placeOrderAction itself requires
   // it too.
   if (!fulfillment) {
-    redirect("/checkout?error=no_fulfillment");
+    redirect("/checkout/delivery?error=no_fulfillment");
   }
 
   const selectedBranch = await prisma.branch.findUnique({ where: { id: fulfillment.branchId } });
@@ -36,7 +36,7 @@ export default async function CheckoutPaymentPage({ searchParams }) {
   return (
     <main className="mx-auto w-full max-w-lg flex-1 px-4 py-10 sm:px-6 sm:py-12">
       <Link
-        href="/checkout"
+        href="/checkout/delivery"
         className="mb-4 inline-block text-sm font-medium text-zinc-600 hover:text-zinc-900"
       >
         ← Change delivery/pickup details

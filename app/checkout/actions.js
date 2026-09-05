@@ -64,7 +64,7 @@ export async function placeOrderAction(formData) {
 
   const fulfillment = await getFulfillment();
   if (!fulfillment) {
-    redirect("/checkout?error=no_fulfillment");
+    redirect("/checkout/delivery?error=no_fulfillment");
   }
 
   const paymentMethod = formData.get("paymentMethod")?.toString();
@@ -86,7 +86,7 @@ export async function placeOrderAction(formData) {
       ? await prisma.address.findUnique({ where: { id: fulfillment.addressId } })
       : null;
     if (!address || address.userId !== user.id) {
-      redirect("/checkout?error=no_fulfillment");
+      redirect("/checkout/delivery?error=no_fulfillment");
     }
     addressId = address.id;
   }
@@ -203,5 +203,5 @@ export async function placeOrderAction(formData) {
   await clearCart();
   await clearFulfillment();
 
-  redirect(`/orders/${order.id}`);
+  redirect(`/checkout/confirmation/${order.id}`);
 }

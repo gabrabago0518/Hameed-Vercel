@@ -79,7 +79,7 @@ export default async function AddressesPage({ searchParams }) {
   if (!user) redirect("/login");
 
   const { error, add, edit, from } = await searchParams;
-  const backTo = from === "checkout" ? "/checkout" : "/account/addresses";
+  const backTo = from === "checkout" ? "/checkout/delivery" : "/account/addresses";
 
   const addresses = await prisma.address.findMany({
     where: { userId: user.id },
@@ -127,7 +127,7 @@ export default async function AddressesPage({ searchParams }) {
             initialAddress={editingAddress}
             showDefaultCheckbox={editingAddress ? false : addresses.length > 0}
             submitLabel={editingAddress ? "Save changes" : "Save address"}
-            redirectTo={!editingAddress && from === "checkout" ? "/checkout" : undefined}
+            redirectTo={!editingAddress && from === "checkout" ? "/checkout/delivery" : undefined}
             errorRedirectTo={`/account/addresses?add=1${from === "checkout" ? "&from=checkout" : ""}`}
           />
         </div>
