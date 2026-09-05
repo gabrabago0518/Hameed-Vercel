@@ -8,6 +8,7 @@ import { placeOrderAction } from "../actions.js";
 
 const ERROR_MESSAGES = {
   no_payment_method: "Please choose a payment method.",
+  invalid_exchange: "Please enter a valid exchange amount (at least the order total).",
 };
 
 export default async function CheckoutPaymentPage({ searchParams }) {
@@ -111,17 +112,44 @@ export default async function CheckoutPaymentPage({ searchParams }) {
             </button>
           </form>
 
-          <form action={placeOrderAction}>
+          <form
+            action={placeOrderAction}
+            className="flex flex-col gap-3 rounded-xl border border-zinc-200 p-4"
+          >
             <input type="hidden" name="paymentMethod" value="CASH_ON_DELIVERY" />
-            <button
-              type="submit"
-              className="w-full rounded-xl border border-zinc-200 p-4 text-left transition-colors hover:border-red-300"
-            >
+            <div>
               <p className="font-semibold text-zinc-900">Pay with Cash</p>
               <p className="mt-1 text-sm text-zinc-600">
                 No online payment needed — pay when you receive your order. We&apos;ll call to
                 confirm first.
               </p>
+            </div>
+
+            <div>
+              <label htmlFor="exchangeFor" className="text-sm font-medium text-zinc-900">
+                Exchange for:
+              </label>
+              <input
+                id="exchangeFor"
+                name="exchangeFor"
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                min={total}
+                required
+                placeholder={`e.g. ${(Math.ceil(total / 100) * 100).toFixed(2)}`}
+                className="mt-1 min-h-11 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none"
+              />
+              <p className="mt-1 text-xs text-zinc-500">
+                How much cash will you hand over? So we can prepare your exact change.
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              className="min-h-11 self-start rounded-full bg-red-600 px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700"
+            >
+              Confirm
             </button>
           </form>
         </div>

@@ -94,6 +94,20 @@ export async function placeOrderAction(formData) {
   const deliveryFee = 0;
   const orderTotal = total + deliveryFee;
 
+  // The amount the customer says they'll hand over in cash — collected on
+  // the payment step so whoever hands off the order knows how much change to
+  // bring. Must be at least the order total; anything else means the field
+  // was left blank or someone tampered with the request.
+  let codExchangeFor = null;
+  if (isCod) {
+    const raw = formData.get("exchangeFor")?.toString();
+    const parsed = raw ? Number.parseFloat(raw) : NaN;
+    if (!raw || Number.isNaN(parsed) || parsed < orderTotal) {
+      redirect("/checkout/payment?error=invalid_exchange");
+    }
+    codExchangeFor = parsed;
+  }
+
   // COD has no payment to collect online, so it starts at its own status
   // (PENDING_CONFIRMATION) rather than PENDING — a plain PENDING here would
   // make it look, to staff and to /admin/sales, like a QR/GCash order still
@@ -150,6 +164,7 @@ export async function placeOrderAction(formData) {
           status: "PENDING",
           amount: orderTotal,
           transactionRef: generateReference(),
+          ...(isCod ? { codExchangeFor } : {}),
         },
       },
     },

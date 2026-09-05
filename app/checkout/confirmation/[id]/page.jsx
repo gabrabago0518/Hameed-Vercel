@@ -1,14 +1,15 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "../../../../lib/session.js";
 import { prisma } from "../../../../lib/prisma.js";
+import ConfirmationStatus from "./ConfirmationStatus.jsx";
 
-// Minimal acknowledgment screen shown right after checkout, before this
-// specific payment method has necessarily been completed (a QR/GCash order
-// still needs the customer to actually pay, which happens on /orders/[id]
-// via "Track My Order" below — this page just confirms the order itself
-// was successfully placed). Deliberately lightweight rather than repeating
-// the full order summary/payment section/tracker that page already shows.
+// Minimal acknowledgment screen shown right after checkout. For most payment
+// methods the order is simply placed (a QR/GCash order still needs the
+// customer to actually pay, which happens on /orders/[id] via "Track My
+// Order" below). For Cash on Delivery, the order starts at
+// PENDING_CONFIRMATION instead — ConfirmationStatus (a client component)
+// handles showing a "waiting for confirmation" state and polling until an
+// admin verifies it, then swapping to this same "placed" messaging in place.
 export default async function CheckoutConfirmationPage({ params }) {
   const user = await getCurrentUser();
   if (!user) {
@@ -28,25 +29,15 @@ export default async function CheckoutConfirmationPage({ params }) {
 
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center px-6 py-24 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-3xl text-emerald-600">
-        ✓
-      </div>
-
-      <h1 className="mt-6 font-[family-name:var(--font-heading)] text-2xl font-bold text-zinc-900">
-        Your order has been placed!
-      </h1>
-      <p className="mt-2 text-sm text-zinc-600">
-        Reference:{" "}
-        <span className="font-semibold text-zinc-900">{order.payment?.transactionRef}</span>
-      </p>
-      <p className="mt-1 text-2xl font-bold text-red-600">₱{Number(order.total).toFixed(2)}</p>
-
-      <Link
-        href={`/orders/${order.id}`}
-        className="mt-8 flex min-h-11 w-full items-center justify-center rounded-full bg-red-600 px-8 py-3 text-base font-semibold text-white transition-colors hover:bg-red-700"
-      >
-        Track My Order
-      </Link>
+      <ConfirmationStatus
+        orderId={order.id}
+        initialStatus={order.status}
+        reference={order.payment?.transactionRef}
+        total={Number(order.total)}
+        exchangeFor={
+          order.payment?.codExchangeFor != null ? Number(order.payment.codExchangeFor) : null
+        }
+      />
     </main>
   );
 }
