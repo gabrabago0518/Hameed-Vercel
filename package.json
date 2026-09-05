@@ -5,12 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma migrate deploy && next build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
     "db:seed": "node --env-file=.env prisma/seed.js",
-    "db:create-admin": "node --env-file=.env prisma/create-admin.js"
+    "db:create-admin": "node --env-file=.env prisma/create-admin.js",
+    "db:create-staff": "node --env-file=.env prisma/create-staff.js"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",

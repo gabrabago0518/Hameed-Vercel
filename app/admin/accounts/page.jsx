@@ -2,7 +2,7 @@ import { requireAdmin } from "../../../lib/roleGuard.js";
 import { prisma } from "../../../lib/prisma.js";
 import { changeUserRoleAction, deleteUserAction } from "./actions.js";
 
-const ROLES = ["CUSTOMER", "EMPLOYEE", "ADMIN"];
+const ROLES = ["CUSTOMER", "STAFF", "ADMIN"];
 
 export default async function AdminAccountsPage() {
   const admin = await requireAdmin();

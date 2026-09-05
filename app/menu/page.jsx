@@ -11,7 +11,10 @@ export default async function MenuPage() {
         orderBy: { sortOrder: "asc" },
         include: {
           menuItems: {
-            where: { isAvailable: true },
+            // Out-of-stock items stay visible (greyed out, "Out of Stock"
+            // label, no Add button below) rather than being filtered out
+            // here — customers can see the item exists, just can't order it
+            // right now. Staff toggle isAvailable from /staff/menu.
             include: { addons: true },
           },
         },
@@ -49,10 +52,19 @@ export default async function MenuPage() {
             {category.menuItems.map((item) => (
               <article
                 key={item.id}
-                className="flex flex-col justify-between rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm"
+                className={`flex flex-col justify-between rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm ${
+                  item.isAvailable ? "" : "opacity-60 grayscale"
+                }`}
               >
                 <div>
-                  <h3 className="font-semibold text-zinc-900">{item.name}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-zinc-900">{item.name}</h3>
+                    {!item.isAvailable && (
+                      <span className="rounded-full bg-zinc-200 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-zinc-600">
+                        Out of Stock
+                      </span>
+                    )}
+                  </div>
                   {item.description && (
                     <p className="mt-1 text-sm text-zinc-600">{item.description}</p>
                   )}
@@ -61,7 +73,15 @@ export default async function MenuPage() {
                   <span className="font-semibold text-red-600">
                     ₱{Number(item.price).toFixed(2)}
                   </span>
-                  {user ? (
+                  {!item.isAvailable ? (
+                    <button
+                      type="button"
+                      disabled
+                      className="cursor-not-allowed rounded-full bg-zinc-300 px-4 py-1.5 text-sm font-semibold text-zinc-500"
+                    >
+                      Add
+                    </button>
+                  ) : user ? (
                     <AddToCartButton menuItemId={item.id} itemName={item.name} />
                   ) : (
                     <Link

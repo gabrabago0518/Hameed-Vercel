@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "../../../lib/roleGuard.js";
 import { prisma } from "../../../lib/prisma.js";
 
-const VALID_ROLES = ["CUSTOMER", "EMPLOYEE", "ADMIN"];
+const VALID_ROLES = ["CUSTOMER", "STAFF", "ADMIN"];
 
 export async function changeUserRoleAction(formData) {
   const admin = await requireAdmin();

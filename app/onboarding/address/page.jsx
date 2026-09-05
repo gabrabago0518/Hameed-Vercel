@@ -15,7 +15,7 @@ export default async function OnboardingAddressPage({ searchParams }) {
 
   // Staff accounts skip this entirely — they're not customers placing
   // delivery orders (same exemption isProfileComplete already makes).
-  if (user.role !== "CUSTOMER") redirect(user.role === "ADMIN" ? "/admin" : "/staff");
+  if (user.role !== "CUSTOMER") redirect(user.role === "ADMIN" ? "/admin" : "/staff/dashboard");
 
   const addressCount = await prisma.address.count({ where: { userId: user.id } });
   if (addressCount > 0) redirect("/account");
