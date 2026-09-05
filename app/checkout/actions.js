@@ -5,8 +5,8 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "../../lib/session.js";
 import { isProfileComplete } from "../../lib/profile.js";
-import { getFulfillment, setFulfillment } from "../../lib/fulfillment.js";
-import { getCartDetails } from "../../lib/cart.js";
+import { getFulfillment, setFulfillment, clearFulfillment } from "../../lib/fulfillment.js";
+import { getCartDetails, clearCart } from "../../lib/cart.js";
 import { prisma } from "../../lib/prisma.js";
 import { createAndAttachPaymentIntent } from "../../lib/paymongo.js";
 import { resolveBaseUrl } from "../../lib/requestUrl.js";
@@ -185,18 +185,21 @@ export async function placeOrderAction(formData) {
     }
   }
 
-  // Deliberately NOT clearing the cart/fulfillment cookie here — by request,
-  // the cart should still show its items if the customer goes back to the
-  // menu/homepage or refreshes before actually paying. It only clears once
-  // the payment genuinely succeeds (see the poll route below, which is the
-  // only place that can touch the customer's own cookies — a PayMongo
-  // webhook or a staff COD verification can't, since those aren't requests
-  // from the customer's browser). Known accepted trade-off, same one this
-  // project hit the first time it built this: if the customer starts a
-  // second, unrelated cart while this order is still awaiting payment, and
-  // then reopens this order's confirmation page after it's confirmed paid,
-  // that second cart gets cleared too, since clearing isn't scoped to a
-  // specific order. Considered narrow enough to accept rather than track
-  // "which order does this cart belong to" just to prevent it.
+  // Cleared here, right as the order is placed, rather than waiting for
+  // payment to actually be confirmed. The earlier design waited for
+  // confirmation (via the poll route touching the cookie once
+  // Payment.status flips to PAID) specifically so refreshing/going back
+  // before paying wouldn't make it look like the order vanished — but that
+  // meant a COD order verified by staff while the customer isn't sitting on
+  // its confirmation page (the normal case: they see "we'll call you" and
+  // move on) never got its cart cleared at all, since nothing else touches
+  // the customer's own cookies for them. The order/its items are already
+  // safely in the database by this point regardless of payment method, so
+  // the cart cookie has no remaining purpose to preserve — retrying a
+  // failed/pending payment happens against this order (via /orders/[id]),
+  // not by re-adding items to a fresh cart.
+  await clearCart();
+  await clearFulfillment();
+
   redirect(`/orders/${order.id}`);
 }
