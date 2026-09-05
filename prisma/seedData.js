@@ -31,6 +31,9 @@ export const restaurantSeedData = {
               description:
                 "Steamed rice topped with savory shredded chicken, wrapped in banana leaf — our most-loved dish.",
               price: 65.0,
+              addons: {
+                create: [{ name: "Combo (2 Rice + Pastil)", price: 90.0 }],
+              },
               variantGroups: {
                 create: [
                   {
@@ -63,6 +66,7 @@ export const restaurantSeedData = {
                   { name: "Extra Rice", price: 25.0 },
                   { name: "Extra Gravy", price: 15.0 },
                   { name: "Make it a Combo (+ Iced Tea)", price: 35.0 },
+                  { name: "Combo (2 Rice + Pastil + Egg)", price: 105.0 },
                 ],
               },
             },
@@ -71,7 +75,10 @@ export const restaurantSeedData = {
               description: "Sweet and savory beef tapa with garlic rice and egg.",
               price: 139.0,
               addons: {
-                create: [{ name: "Make it a Combo (+ Iced Tea)", price: 35.0 }],
+                create: [
+                  { name: "Make it a Combo (+ Iced Tea)", price: 35.0 },
+                  { name: "Combo (2 Rice + Pastil + Egg)", price: 105.0 },
+                ],
               },
             },
           ],
@@ -113,7 +120,10 @@ export const restaurantSeedData = {
               description: "Beef tapa with garlic rice and a fried egg.",
               price: 79.0,
               addons: {
-                create: [{ name: "Make it a Combo (+ Iced Tea)", price: 35.0 }],
+                create: [
+                  { name: "Make it a Combo (+ Iced Tea)", price: 35.0 },
+                  { name: "Combo (2 Rice + Pastil)", price: 90.0 },
+                ],
               },
             },
             {
@@ -121,7 +131,10 @@ export const restaurantSeedData = {
               description: "Fried chicken with garlic rice and a fried egg.",
               price: 79.0,
               addons: {
-                create: [{ name: "Make it a Combo (+ Iced Tea)", price: 35.0 }],
+                create: [
+                  { name: "Make it a Combo (+ Iced Tea)", price: 35.0 },
+                  { name: "Combo (2 Rice + Pastil)", price: 90.0 },
+                ],
               },
             },
             {
@@ -129,26 +142,38 @@ export const restaurantSeedData = {
               description: "Sweet Filipino sausage with garlic rice and a fried egg.",
               price: 69.0,
               addons: {
-                create: [{ name: "Make it a Combo (+ Iced Tea)", price: 35.0 }],
+                create: [
+                  { name: "Make it a Combo (+ Iced Tea)", price: 35.0 },
+                  { name: "Combo (2 Rice + Pastil)", price: 90.0 },
+                ],
               },
             },
             {
               name: "Spicy Pastil Silog",
               description: "Our signature pastil with a spicy kick, garlic rice, and a fried egg.",
               price: 75.0,
+              addons: {
+                create: [{ name: "Combo (2 Rice + Pastil)", price: 90.0 }],
+              },
             },
             {
               name: "Hotsilog",
               description: "Spicy hotdog with garlic rice and a fried egg.",
               price: 69.0,
               addons: {
-                create: [{ name: "Make it a Combo (+ Iced Tea)", price: 35.0 }],
+                create: [
+                  { name: "Make it a Combo (+ Iced Tea)", price: 35.0 },
+                  { name: "Combo (2 Rice + Pastil)", price: 90.0 },
+                ],
               },
             },
             {
               name: "Chicken Wings",
               description: "Crispy fried chicken wings.",
               price: 99.0,
+              addons: {
+                create: [{ name: "Combo (2 Rice + Pastil)", price: 90.0 }],
+              },
             },
           ],
         },
