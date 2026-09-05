@@ -3,17 +3,28 @@
 import { useTransition } from "react";
 import { addToCartAction } from "../cart/actions.js";
 import { useToast } from "../components/ToastContext.jsx";
+import { useCartUI } from "../components/CartUIContext.jsx";
 
 export default function AddToCartButton({ menuItemId, itemName }) {
   const [isPending, startTransition] = useTransition();
   const { showToast } = useToast();
+  const { setOpen } = useCartUI();
 
   function handleClick() {
     startTransition(async () => {
       const formData = new FormData();
       formData.set("menuItemId", menuItemId);
+      // If addToCartAction redirects instead (no session, incomplete
+      // profile), it throws Next's own redirect signal here and the lines
+      // below never run — so the cart panel only opens when an item was
+      // actually added.
       await addToCartAction(formData);
       showToast(`Added ${itemName} to cart`);
+      // By request: the cart panel opens automatically on every Add click,
+      // not just the first — it stays open until the customer explicitly
+      // closes it (the header cart button, its own X, or checking out),
+      // same as clicking the header cart button directly would do.
+      setOpen(true);
     });
   }
 
