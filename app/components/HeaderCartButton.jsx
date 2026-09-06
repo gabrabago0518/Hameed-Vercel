@@ -10,7 +10,7 @@ export default function HeaderCartButton({ count }) {
     <button
       type="button"
       onClick={() => setOpen(!open)}
-      className="flex items-center gap-2 text-lg font-medium text-white/90 hover:text-white"
+      className="flex items-center gap-2 font-[family-name:var(--font-heading)] text-lg text-white/90 hover:text-white"
     >
       <ShoppingCart size={24} />
       Cart{count > 0 ? ` (${count})` : ""}
