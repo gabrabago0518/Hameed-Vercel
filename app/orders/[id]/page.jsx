@@ -224,9 +224,21 @@ export default async function OrderConfirmationPage({ params }) {
             );
           })}
         </div>
-        <div className="mt-3 flex justify-between border-t border-zinc-100 pt-3 text-sm font-semibold text-zinc-900">
-          <span>Total</span>
-          <span className="text-red-600">₱{Number(order.total).toFixed(2)}</span>
+        <div className="mt-3 flex flex-col gap-1 border-t border-zinc-100 pt-3 text-sm">
+          <div className="flex justify-between text-zinc-600">
+            <span>Subtotal</span>
+            <span>₱{Number(order.subtotal).toFixed(2)}</span>
+          </div>
+          {Number(order.deliveryFee) > 0 && (
+            <div className="flex justify-between text-zinc-600">
+              <span>Delivery fee</span>
+              <span>₱{Number(order.deliveryFee).toFixed(2)}</span>
+            </div>
+          )}
+          <div className="mt-1 flex justify-between border-t border-zinc-100 pt-2 font-semibold text-zinc-900">
+            <span>Total</span>
+            <span className="text-red-600">₱{Number(order.total).toFixed(2)}</span>
+          </div>
         </div>
       </section>
 
