@@ -30,6 +30,14 @@ export default function Header({ user, cartCount }) {
         </Link>
 
         <nav className="flex items-center gap-8">
+          {/* Explicit text link, by request — some customers didn't realize
+              the logo itself already links home. */}
+          <Link
+            href="/"
+            className="font-[family-name:var(--font-heading)] text-lg text-white/90 hover:text-white"
+          >
+            Home
+          </Link>
           <Link
             href="/menu"
             className="font-[family-name:var(--font-heading)] text-lg text-white/90 hover:text-white"
