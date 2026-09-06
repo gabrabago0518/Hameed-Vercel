@@ -3,13 +3,13 @@ import { getCurrentUser } from "../../../../lib/session.js";
 import { prisma } from "../../../../lib/prisma.js";
 import ConfirmationStatus from "./ConfirmationStatus.jsx";
 
-// Minimal acknowledgment screen shown right after checkout. For most payment
-// methods the order is simply placed (a QR/GCash order still needs the
-// customer to actually pay, which happens on /orders/[id] via "Track My
-// Order" below). For Cash on Delivery, the order starts at
-// PENDING_CONFIRMATION instead — ConfirmationStatus (a client component)
-// handles showing a "waiting for confirmation" state and polling until an
-// admin verifies it, then swapping to this same "placed" messaging in place.
+// Acknowledgment + live payment-status screen shown right after checkout.
+// ConfirmationStatus (a client component) branches by payment method: QR/
+// GCash show a "Waiting for payment" state (QR image or a Pay with GCash
+// button) that polls until PayMongo confirms, then swaps to "Payment
+// Received"; Cash on Delivery shows "Waiting for confirmation" and polls
+// until an admin verifies it, then swaps to "Order Confirmed". Either way,
+// "Track My Order" leads to the full /orders/[id] tracker.
 export default async function CheckoutConfirmationPage({ params }) {
   const user = await getCurrentUser();
   if (!user) {
@@ -31,12 +31,16 @@ export default async function CheckoutConfirmationPage({ params }) {
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center px-6 py-24 text-center">
       <ConfirmationStatus
         orderId={order.id}
-        initialStatus={order.status}
+        initialOrderStatus={order.status}
+        paymentMethod={order.payment?.method}
+        initialPaymentStatus={order.payment?.status}
         reference={order.payment?.transactionRef}
         total={Number(order.total)}
         exchangeFor={
           order.payment?.codExchangeFor != null ? Number(order.payment.codExchangeFor) : null
         }
+        checkoutUrl={order.payment?.paymongoCheckoutUrl ?? null}
+        qrCodeData={order.payment?.paymongoQrCodeData ?? null}
       />
     </main>
   );

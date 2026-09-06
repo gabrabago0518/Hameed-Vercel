@@ -37,7 +37,7 @@ export default async function CheckoutDeliveryPage({ searchParams }) {
       </Link>
 
       <h1 className="mb-8 font-[family-name:var(--font-heading)] text-xl font-bold text-zinc-900 sm:text-2xl">
-        Delivery
+        How would you like to get your order
       </h1>
 
       {error && ERROR_MESSAGES[error] && (
@@ -47,10 +47,6 @@ export default async function CheckoutDeliveryPage({ searchParams }) {
       )}
 
       <section className="rounded-2xl border border-zinc-200 bg-white p-5">
-        <h2 className="font-[family-name:var(--font-heading)] text-lg font-semibold text-zinc-900">
-          How would you like to get your order?
-        </h2>
-
         <FulfillmentSelector
           branches={branches}
           addresses={addresses}
