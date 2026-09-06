@@ -33,13 +33,13 @@ export const restaurantSeedData = {
     create: [
       {
         name: "Lower Bicutan Branch",
-        address: "Maharlika Village",
-        city: "Taguig City",
+        address: "18 Barrameda, Lower Bicutan",
+        city: "Taguig, 1632 Metro Manila",
       },
       {
         name: "New Lower Bicutan Branch",
-        address: "New Lower Bicutan",
-        city: "Taguig City",
+        address: "44 M. L. Quezon Ave, New Lower Bicutan",
+        city: "Taguig, 1632 Metro Manila",
       },
     ],
   },
