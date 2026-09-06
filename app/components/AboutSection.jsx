@@ -7,7 +7,7 @@ export default function AboutSection() {
         <div className="relative aspect-square w-full max-w-xs shrink-0 overflow-hidden rounded-3xl shadow-lg sm:max-w-sm lg:w-2/5 lg:max-w-none">
           <Image
             src="/images/about/founder.webp"
-            alt="Hameed, founder of Hameed's Pastil"
+            alt="The people behind Hameed the Love Recipe"
             fill
             sizes="(min-width: 1024px) 40vw, 100vw"
             className="object-cover"
@@ -32,6 +32,40 @@ export default function AboutSection() {
             What makes it special isn&apos;t just the taste — it&apos;s that
             every order carries a piece of that heritage with it. That&apos;s
             the love recipe.
+          </p>
+        </div>
+      </div>
+
+      {/* Two supporting photos — the actual kitchen where everything is
+          cooked, and packed product ready to ship — backing up the "no
+          shortcuts" claim above with a real look behind the scenes. */}
+      <div className="mx-auto mt-8 grid w-full max-w-5xl grid-cols-1 gap-4 px-4 sm:mt-10 sm:grid-cols-2 sm:gap-6 sm:px-6">
+        <div>
+          <div className="relative aspect-video overflow-hidden rounded-2xl shadow-md">
+            <Image
+              src="/images/about/story-behind.webp"
+              alt="Inside Hameed's kitchen"
+              fill
+              sizes="(min-width: 640px) 50vw, 100vw"
+              className="object-cover"
+            />
+          </div>
+          <p className="mt-2 text-center text-xs text-zinc-500 sm:text-sm">
+            Cooked fresh daily in our own kitchen
+          </p>
+        </div>
+        <div>
+          <div className="relative aspect-video overflow-hidden rounded-2xl shadow-md">
+            <Image
+              src="/images/about/how-we-pack.webp"
+              alt="How Hameed's products are packed"
+              fill
+              sizes="(min-width: 640px) 50vw, 100vw"
+              className="object-cover"
+            />
+          </div>
+          <p className="mt-2 text-center text-xs text-zinc-500 sm:text-sm">
+            Carefully packed and ready to go
           </p>
         </div>
       </div>
