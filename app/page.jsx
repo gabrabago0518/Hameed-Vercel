@@ -1,9 +1,11 @@
 import HeroCarousel from "./components/HeroCarousel.jsx";
 import FeaturedMenu from "./components/FeaturedMenu.jsx";
 import AboutSection from "./components/AboutSection.jsx";
+import ResellerSection from "./components/ResellerSection.jsx";
 import BlogSection from "./components/BlogSection.jsx";
 import CustomerGallery from "./components/CustomerGallery.jsx";
 import NewsSection from "./components/NewsSection.jsx";
+import TestimonialsSection from "./components/TestimonialsSection.jsx";
 
 // The Pares and Bulalo slides that used to be here were removed — both
 // items were retired/deleted in the menu overhaul that replaced the whole
@@ -50,9 +52,11 @@ export default function Home() {
 
       <FeaturedMenu />
       <AboutSection />
+      <ResellerSection />
       <BlogSection />
       <CustomerGallery />
       <NewsSection />
+      <TestimonialsSection />
     </main>
   );
 }
