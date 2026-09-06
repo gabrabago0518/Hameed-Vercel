@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "../../../../lib/prisma.js";
-import { STATUS_LABELS, PAYMENT_METHOD_LABELS } from "../../../../lib/orderStatus.js";
+import { STATUS_LABELS, PAYMENT_METHOD_LABELS, isPaymentWindowExpired } from "../../../../lib/orderStatus.js";
 import { getOrderItemLineTotal, getOrderItemChoiceLabels } from "../../../../lib/orderItemDisplay.js";
 import { verifyCodOrderAction, setOrderStatusAction } from "../actions.js";
 
@@ -33,6 +33,7 @@ export default async function AdminOrderDetailPage({ params, searchParams }) {
 
   const needsConfirmation =
     order.payment?.method === "CASH_ON_DELIVERY" && order.status === "PENDING_CONFIRMATION";
+  const expiredPending = isPaymentWindowExpired(order);
 
   return (
     <div className="mx-auto w-full max-w-2xl">
@@ -46,12 +47,24 @@ export default async function AdminOrderDetailPage({ params, searchParams }) {
         </h1>
         <span
           className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${
-            needsConfirmation ? "bg-amber-200 text-amber-800" : "bg-zinc-100 text-zinc-600"
+            needsConfirmation
+              ? "bg-amber-200 text-amber-800"
+              : expiredPending
+                ? "bg-zinc-100 text-zinc-400"
+                : "bg-zinc-100 text-zinc-600"
           }`}
         >
-          {STATUS_LABELS[order.status]}
+          {expiredPending ? "Payment window expired" : STATUS_LABELS[order.status]}
         </span>
       </div>
+
+      {expiredPending && (
+        <p className="mt-2 text-xs text-zinc-500">
+          This order&apos;s 15-minute payment window has passed with no payment received.
+          It&apos;ll be automatically cancelled the next time the customer reopens it or the
+          scheduled payment check runs (currently once daily) — nothing for you to do here.
+        </p>
+      )}
 
       {needsConfirmation && (
         <div className="mt-4 flex items-center justify-between rounded-2xl border border-amber-200 bg-amber-50 p-4">

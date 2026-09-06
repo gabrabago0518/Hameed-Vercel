@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "../../../lib/prisma.js";
-import { STATUS_LABELS } from "../../../lib/orderStatus.js";
+import { STATUS_LABELS, isPaymentWindowExpired } from "../../../lib/orderStatus.js";
 import { verifyCodOrderAction } from "./actions.js";
 
 const STATUS_OPTIONS = Object.keys(STATUS_LABELS);
@@ -91,6 +91,7 @@ export default async function AdminOrdersPage({ searchParams }) {
               const needsConfirmation =
                 order.payment?.method === "CASH_ON_DELIVERY" &&
                 order.status === "PENDING_CONFIRMATION";
+              const expiredPending = isPaymentWindowExpired(order);
 
               return (
                 <tr
@@ -112,10 +113,14 @@ export default async function AdminOrdersPage({ searchParams }) {
                   <td className="px-4 py-3">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${
-                        needsConfirmation ? "bg-amber-200 text-amber-800" : "bg-zinc-100 text-zinc-600"
+                        needsConfirmation
+                          ? "bg-amber-200 text-amber-800"
+                          : expiredPending
+                            ? "bg-zinc-100 text-zinc-400"
+                            : "bg-zinc-100 text-zinc-600"
                       }`}
                     >
-                      {STATUS_LABELS[order.status]}
+                      {expiredPending ? "Payment window expired" : STATUS_LABELS[order.status]}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-zinc-500">
