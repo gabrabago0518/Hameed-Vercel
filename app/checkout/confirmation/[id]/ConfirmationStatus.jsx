@@ -8,6 +8,20 @@ import GCashLogo from "../../../components/GCashLogo.jsx";
 const POLL_INTERVAL_MS = 4000;
 const IS_COD = (method) => method === "CASH_ON_DELIVERY";
 
+// While something is still processing, a fixed blurred backdrop sits behind
+// the status card so the "in progress" state reads as clearly different from
+// a resolved one at a glance — not just the pulsing icon. Fixed positioning
+// covers the whole viewport (header included) regardless of where this ends
+// up in the page.
+function WithLoadingBackdrop({ children }) {
+  return (
+    <>
+      <div className="fixed inset-0 z-40 bg-white/70 backdrop-blur-sm" aria-hidden="true" />
+      <div className="relative z-50 flex flex-col items-center">{children}</div>
+    </>
+  );
+}
+
 // Right after checkout this polls the same /api/orders/[id]/poll route the
 // full order tracker (/orders/[id]) uses, so the customer sees the outcome
 // land here without needing to navigate away first:
@@ -73,7 +87,7 @@ export default function ConfirmationStatus({
   if (cod) {
     if (orderStatus === "PENDING_CONFIRMATION") {
       return (
-        <>
+        <WithLoadingBackdrop>
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 text-3xl text-amber-600">
             <span className="animate-pulse">⏳</span>
           </div>
@@ -92,7 +106,7 @@ export default function ConfirmationStatus({
           <p className="mt-1 text-sm text-zinc-600">
             Reference: <span className="font-semibold text-zinc-900">{reference}</span>
           </p>
-        </>
+        </WithLoadingBackdrop>
       );
     }
 
@@ -185,7 +199,7 @@ export default function ConfirmationStatus({
   }
 
   return (
-    <>
+    <WithLoadingBackdrop>
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 text-3xl text-amber-600">
         <span className="animate-pulse">⏳</span>
       </div>
@@ -232,6 +246,6 @@ export default function ConfirmationStatus({
         Pay ₱{total.toFixed(2)} — this page will update itself once we receive your payment.
       </p>
       <p className="mt-1 text-xs text-zinc-400">Reference: {reference}</p>
-    </>
+    </WithLoadingBackdrop>
   );
 }
