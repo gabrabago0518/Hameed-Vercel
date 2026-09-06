@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { UserRound } from "lucide-react";
+import { Home, UtensilsCrossed, UserRound } from "lucide-react";
 import { logoutAction } from "../logout/actions.js";
 import HeaderCartButton from "./HeaderCartButton.jsx";
 
@@ -34,29 +34,33 @@ export default function Header({ user, cartCount }) {
           />
         </Link>
 
-        <nav className="flex items-center gap-2 sm:gap-8">
-          {/* Explicit text link, by request — some customers didn't realize
-              the logo itself already links home. */}
+        <nav className="flex items-center gap-3 sm:gap-8">
+          {/* Icon-only on mobile (text takes up too much room at this width,
+              per request) — the label reappears at sm: alongside the icon.
+              Home is an explicit link, by request — some customers didn't
+              realize the logo itself already links home. */}
           <Link
             href="/"
-            className="font-[family-name:var(--font-heading)] text-sm text-white/90 hover:text-white sm:text-lg"
+            className="flex items-center gap-2 font-[family-name:var(--font-heading)] text-white/90 hover:text-white sm:text-lg"
           >
-            Home
+            <Home size={20} className="sm:h-6 sm:w-6" />
+            <span className="hidden sm:inline">Home</span>
           </Link>
           <Link
             href="/menu"
-            className="font-[family-name:var(--font-heading)] text-sm text-white/90 hover:text-white sm:text-lg"
+            className="flex items-center gap-2 font-[family-name:var(--font-heading)] text-white/90 hover:text-white sm:text-lg"
           >
-            Menu
+            <UtensilsCrossed size={20} className="sm:h-6 sm:w-6" />
+            <span className="hidden sm:inline">Menu</span>
           </Link>
           {user ? (
             <div className="group relative">
               <Link
                 href="/account"
-                className="flex items-center gap-1 font-[family-name:var(--font-heading)] text-sm text-white/90 hover:text-white sm:gap-2 sm:text-lg"
+                className="flex items-center gap-2 font-[family-name:var(--font-heading)] text-white/90 hover:text-white sm:text-lg"
               >
                 <UserRound size={20} className="sm:h-6 sm:w-6" />
-                {user.name.split(" ")[0]}
+                <span className="hidden sm:inline">{user.name.split(" ")[0]}</span>
               </Link>
               <div className="invisible absolute right-0 top-full pt-2 opacity-0 transition-opacity group-hover:visible group-hover:opacity-100">
                 <div className="w-40 rounded-xl border border-zinc-200 bg-white p-2 shadow-lg">
@@ -103,10 +107,10 @@ export default function Header({ user, cartCount }) {
             <>
               <Link
                 href="/account"
-                className="flex items-center gap-1 font-[family-name:var(--font-heading)] text-sm text-white/90 hover:text-white sm:gap-2 sm:text-lg"
+                className="flex items-center gap-2 font-[family-name:var(--font-heading)] text-white/90 hover:text-white sm:text-lg"
               >
                 <UserRound size={20} className="sm:h-6 sm:w-6" />
-                Account
+                <span className="hidden sm:inline">Account</span>
               </Link>
               <Link
                 href="/login"
