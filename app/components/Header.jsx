@@ -12,14 +12,15 @@ export default function Header({ user, cartCount }) {
   return (
     <header className="sticky top-0 z-10 bg-red-600 shadow-md">
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-4">
-        {/* A white silhouette of the logo (public/branding/logo-white.webp,
-            generated from the original's alpha channel) reads cleanly
-            directly on this bar's red-600 background — the original red
-            version didn't (confirmed by compositing it before shipping
-            that version), which is why a white badge was here briefly. */}
+        {/* The full circular badge logo (public/branding/logo-stroke.webp)
+            reads cleanly directly on this bar's red-600 background — unlike
+            the original plain red logo (invisible on red, confirmed by
+            compositing it before shipping a white-silhouette workaround),
+            this version has its own white background + black stroke baked
+            into the artwork, so it needs no separate badge/backdrop here. */}
         <Link href="/" className="flex items-center">
           <Image
-            src="/branding/logo-white.webp"
+            src="/branding/logo-stroke.webp"
             alt="Hameed the Love Recipe"
             width={48}
             height={48}
