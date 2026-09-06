@@ -8,18 +8,22 @@ const initialState = { error: null };
 
 export default function LoginPage() {
   const [state, formAction, pending] = useActionState(loginAction, initialState);
+  const emailRef = useRef(null);
   const passwordRef = useRef(null);
+  const lastEmailRef = useRef("");
 
-  // Both inputs are uncontrolled, so by default the browser just leaves
-  // whatever was typed in place after a failed attempt — including the
-  // password. By request: only the password should clear on a wrong
-  // email/password, so the customer doesn't have to retype their email too.
-  // Imperatively clearing the DOM node (rather than lifting this into React
-  // state) is the right tool here — the email input is left completely
-  // alone.
+  // React resets every uncontrolled field in a <form action={...}> back to
+  // empty once the action finishes — not just the one we actually want
+  // cleared. That's what was still wiping the email on a failed login even
+  // after the earlier fix: the password's own explicit clear below was
+  // (unknowingly) redundant with this built-in reset, which was also
+  // wiping the email the whole time. onSubmit fires before that reset, so
+  // it's used here to snapshot the email's value; the effect below restores
+  // it afterward, but only on an error — the password is left cleared,
+  // which is the one field that should reset on a wrong attempt.
   useEffect(() => {
-    if (state.error && passwordRef.current) {
-      passwordRef.current.value = "";
+    if (state.error && emailRef.current) {
+      emailRef.current.value = lastEmailRef.current;
     }
   }, [state]);
 
@@ -29,7 +33,13 @@ export default function LoginPage() {
         Log in
       </h1>
 
-      <form action={formAction} className="mt-6 flex flex-col gap-4">
+      <form
+        action={formAction}
+        onSubmit={() => {
+          lastEmailRef.current = emailRef.current?.value ?? "";
+        }}
+        className="mt-6 flex flex-col gap-4"
+      >
         <div>
           <label htmlFor="email" className="text-sm font-medium text-zinc-700">
             Email
@@ -39,6 +49,7 @@ export default function LoginPage() {
             name="email"
             type="email"
             required
+            ref={emailRef}
             className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none"
           />
         </div>
