@@ -16,17 +16,31 @@ export default function SignupPage() {
       </h1>
 
       <form action={formAction} className="mt-6 flex flex-col gap-4">
-        <div>
-          <label htmlFor="name" className="text-sm font-medium text-zinc-700">
-            Full name
-          </label>
-          <input
-            id="name"
-            name="name"
-            type="text"
-            required
-            className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none"
-          />
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label htmlFor="firstName" className="text-sm font-medium text-zinc-700">
+              First name
+            </label>
+            <input
+              id="firstName"
+              name="firstName"
+              type="text"
+              required
+              className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label htmlFor="lastName" className="text-sm font-medium text-zinc-700">
+              Last name
+            </label>
+            <input
+              id="lastName"
+              name="lastName"
+              type="text"
+              required
+              className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none"
+            />
+          </div>
         </div>
 
         <div>
@@ -43,16 +57,23 @@ export default function SignupPage() {
         </div>
 
         <div>
-          <label htmlFor="phone" className="text-sm font-medium text-zinc-700">
+          <label htmlFor="phoneLocal" className="text-sm font-medium text-zinc-700">
             Contact number
           </label>
-          <input
-            id="phone"
-            name="phone"
-            type="tel"
-            required
-            className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none"
-          />
+          <div className="mt-1 flex">
+            <span className="flex min-h-11 items-center rounded-l-lg border border-r-0 border-zinc-300 bg-zinc-50 px-3 text-sm text-zinc-600">
+              +63
+            </span>
+            <input
+              id="phoneLocal"
+              name="phoneLocal"
+              type="tel"
+              inputMode="numeric"
+              required
+              placeholder="9171234567"
+              className="w-full min-w-0 rounded-r-lg border border-zinc-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none"
+            />
+          </div>
         </div>
 
         <div>
