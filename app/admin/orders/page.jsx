@@ -128,17 +128,26 @@ export default async function AdminOrdersPage({ searchParams }) {
                     {order.createdAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
                   </td>
                   <td className="px-4 py-3">
-                    {needsConfirmation && (
-                      <form action={verifyCodOrderAction}>
-                        <input type="hidden" name="orderId" value={order.id} />
-                        <button
-                          type="submit"
-                          className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700"
-                        >
-                          Verify
-                        </button>
-                      </form>
-                    )}
+                    <div className="flex flex-col gap-2">
+                      {needsConfirmation && (
+                        <form action={verifyCodOrderAction}>
+                          <input type="hidden" name="orderId" value={order.id} />
+                          <button
+                            type="submit"
+                            className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700"
+                          >
+                            Verify
+                          </button>
+                        </form>
+                      )}
+                      <Link
+                        href={`/orders/${order.id}/receipt`}
+                        target="_blank"
+                        className="rounded-lg border border-zinc-200 px-3 py-1.5 text-center text-xs font-semibold text-zinc-600 hover:bg-zinc-50"
+                      >
+                        Print receipt
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               );

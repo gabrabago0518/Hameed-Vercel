@@ -192,6 +192,13 @@ export default async function StaffOrdersPage({ searchParams }) {
                         {!needsCodVerification && !nextLabel && (
                           <span className="text-xs text-zinc-400">—</span>
                         )}
+                        <Link
+                          href={`/orders/${order.id}/receipt`}
+                          target="_blank"
+                          className="min-h-11 flex w-full items-center justify-center rounded-full border border-zinc-200 px-3 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-50"
+                        >
+                          Print receipt
+                        </Link>
                       </div>
                     </td>
                   </tr>

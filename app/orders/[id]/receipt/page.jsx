@@ -12,6 +12,12 @@ import PrintButton from "./PrintButton.jsx";
 // a PDF). ChromeGate hides the header/cart panel here the same way it does
 // for /admin and /staff, and the "Back"/Print controls are hidden via
 // Tailwind's print: variant so they never show up in the printed/PDF output.
+//
+// By request, the actual "Print receipt" entry point only appears on the
+// staff and admin order views, not on the customer-facing /orders/[id] — but
+// this page itself still allows the order's own customer to view it directly
+// (their own data, no reason to block it), on top of any ADMIN/STAFF user
+// viewing any order's receipt.
 export default async function OrderReceiptPage({ params }) {
   const user = await getCurrentUser();
   if (!user) {
@@ -33,18 +39,31 @@ export default async function OrderReceiptPage({ params }) {
       branch: true,
       address: true,
       payment: true,
+      user: true,
     },
   });
 
-  if (!order || order.userId !== user.id) {
+  const isOwner = order?.userId === user.id;
+  const isStaffOrAdmin = user.role === "ADMIN" || user.role === "STAFF";
+  if (!order || (!isOwner && !isStaffOrAdmin)) {
     notFound();
   }
+
+  // The customer's own /orders/[id] is off-limits to staff/admin (it's
+  // gated to the order's owner only), so send them back to wherever they
+  // actually came from instead of a link that would 404 on them.
+  const backHref = isOwner
+    ? `/orders/${order.id}`
+    : user.role === "ADMIN"
+      ? `/admin/orders/${order.id}`
+      : "/staff/orders";
+  const backLabel = isOwner ? "Back to order" : "Back";
 
   return (
     <main className="mx-auto w-full max-w-md flex-1 px-6 py-10 print:max-w-none print:px-0 print:py-0">
       <div className="mb-6 flex items-center justify-between print:hidden">
-        <Link href={`/orders/${order.id}`} className="text-sm font-medium text-zinc-600 hover:text-zinc-900">
-          ← Back to order
+        <Link href={backHref} className="text-sm font-medium text-zinc-600 hover:text-zinc-900">
+          ← {backLabel}
         </Link>
         <PrintButton />
       </div>
@@ -76,7 +95,7 @@ export default async function OrderReceiptPage({ params }) {
           </div>
           <div className="flex justify-between">
             <span>Customer</span>
-            <span>{user.name}</span>
+            <span>{order.user.name}</span>
           </div>
         </div>
 

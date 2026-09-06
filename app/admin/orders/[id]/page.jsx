@@ -41,21 +41,30 @@ export default async function AdminOrderDetailPage({ params, searchParams }) {
         &larr; Back to orders
       </Link>
 
-      <div className="mt-4 flex items-center justify-between">
+      <div className="mt-4 flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-zinc-900">
           {order.payment?.transactionRef ?? order.id}
         </h1>
-        <span
-          className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${
-            needsConfirmation
-              ? "bg-amber-200 text-amber-800"
-              : expiredPending
-                ? "bg-zinc-100 text-zinc-400"
-                : "bg-zinc-100 text-zinc-600"
-          }`}
-        >
-          {expiredPending ? "Payment window expired" : STATUS_LABELS[order.status]}
-        </span>
+        <div className="flex shrink-0 items-center gap-2">
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${
+              needsConfirmation
+                ? "bg-amber-200 text-amber-800"
+                : expiredPending
+                  ? "bg-zinc-100 text-zinc-400"
+                  : "bg-zinc-100 text-zinc-600"
+            }`}
+          >
+            {expiredPending ? "Payment window expired" : STATUS_LABELS[order.status]}
+          </span>
+          <Link
+            href={`/orders/${order.id}/receipt`}
+            target="_blank"
+            className="rounded-lg border border-zinc-200 px-3 py-1 text-xs font-semibold text-zinc-600 hover:bg-zinc-50"
+          >
+            Print receipt
+          </Link>
+        </div>
       </div>
 
       {expiredPending && (

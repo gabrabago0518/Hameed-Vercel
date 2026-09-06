@@ -192,17 +192,9 @@ export default async function OrderConfirmationPage({ params }) {
 
   return (
     <main className="mx-auto w-full max-w-lg flex-1 px-4 py-10 sm:px-6 sm:py-12">
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <h1 className="font-[family-name:var(--font-heading)] text-xl font-bold text-zinc-900 sm:text-2xl">
-          Order placed!
-        </h1>
-        <Link
-          href={`/orders/${order.id}/receipt`}
-          className="shrink-0 text-sm font-medium text-red-600 hover:underline"
-        >
-          Print receipt
-        </Link>
-      </div>
+      <h1 className="mb-2 font-[family-name:var(--font-heading)] text-xl font-bold text-zinc-900 sm:text-2xl">
+        Order placed!
+      </h1>
       <p className="mb-8 text-sm text-zinc-600">
         Reference:{" "}
         <span className="font-semibold text-zinc-900">
