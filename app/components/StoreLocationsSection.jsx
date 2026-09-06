@@ -4,10 +4,18 @@ import { prisma } from "../../lib/prisma.js";
 // Branch name/address come straight from the database (same source
 // checkout's pickup selector uses) rather than being hardcoded here, so
 // this never goes stale if a branch is ever renamed or its address is
-// corrected. Photos are matched positionally (store-1.webp, store-2.webp,
-// in branch-name alphabetical order) rather than by a filename derived
-// from the branch name — sidesteps any mismatch between how a branch is
-// named in the system vs. what it's casually called out loud.
+// corrected. Photo filenames are derived from the branch name itself
+// (same slugify pattern as app/menu/MenuTabs.jsx) — confirmed the real
+// names are "Lower Bicutan Branch" and "New Lower Bicutan Branch" once
+// the actual photos were uploaded under those exact names, which settled
+// the earlier "Lower Bicutan" vs. "Maharlika" naming mismatch.
+function slugify(name) {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
 export default async function StoreLocationsSection() {
   const branches = await prisma.branch.findMany({
     where: { isActive: true },
@@ -27,14 +35,14 @@ export default async function StoreLocationsSection() {
       </p>
 
       <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2">
-        {branches.map((branch, i) => (
+        {branches.map((branch) => (
           <div
             key={branch.id}
             className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm"
           >
             <div className="relative aspect-video bg-zinc-100">
               <Image
-                src={`/images/stores/store-${i + 1}.webp`}
+                src={`/images/stores/${slugify(branch.name)}.webp`}
                 alt={branch.name}
                 fill
                 sizes="(min-width: 640px) 50vw, 100vw"
