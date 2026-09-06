@@ -8,7 +8,7 @@ export default async function VerifyEmailPage({ searchParams }) {
   if (!token) {
     return (
       <main className="flex flex-1 flex-col items-center justify-center px-6 py-24 text-center">
-        <h1 className="font-[family-name:var(--font-heading)] text-2xl font-bold text-zinc-900">
+        <h1 className="font-[family-name:var(--font-heading)] text-xl font-bold text-zinc-900 sm:text-2xl">
           Invalid link
         </h1>
         <p className="mt-2 text-zinc-600">This verification link is missing its token.</p>
@@ -21,7 +21,7 @@ export default async function VerifyEmailPage({ searchParams }) {
   if (result.status === "verified") {
     return (
       <main className="flex flex-1 flex-col items-center justify-center px-6 py-24 text-center">
-        <h1 className="font-[family-name:var(--font-heading)] text-2xl font-bold text-emerald-800">
+        <h1 className="font-[family-name:var(--font-heading)] text-xl font-bold text-emerald-800 sm:text-2xl">
           Email verified!
         </h1>
         <p className="mt-2 text-zinc-600">Your account is now active.</p>
@@ -38,7 +38,7 @@ export default async function VerifyEmailPage({ searchParams }) {
   if (result.status === "already_verified") {
     return (
       <main className="flex flex-1 flex-col items-center justify-center px-6 py-24 text-center">
-        <h1 className="font-[family-name:var(--font-heading)] text-2xl font-bold text-zinc-900">
+        <h1 className="font-[family-name:var(--font-heading)] text-xl font-bold text-zinc-900 sm:text-2xl">
           Already verified
         </h1>
         <p className="mt-2 text-zinc-600">
@@ -57,7 +57,7 @@ export default async function VerifyEmailPage({ searchParams }) {
   if (result.status === "expired") {
     return (
       <main className="flex flex-1 flex-col items-center justify-center px-6 py-24 text-center">
-        <h1 className="font-[family-name:var(--font-heading)] text-2xl font-bold text-zinc-900">
+        <h1 className="font-[family-name:var(--font-heading)] text-xl font-bold text-zinc-900 sm:text-2xl">
           Link expired
         </h1>
         <p className="mt-2 text-zinc-600">

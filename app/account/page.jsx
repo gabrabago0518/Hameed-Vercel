@@ -12,7 +12,7 @@ export default async function AccountPage() {
   if (!user) {
     return (
       <main className="flex flex-1 flex-col items-center justify-center px-6 py-24 text-center">
-        <h1 className="font-[family-name:var(--font-heading)] text-2xl font-bold text-zinc-900">
+        <h1 className="font-[family-name:var(--font-heading)] text-xl font-bold text-zinc-900 sm:text-2xl">
           Account
         </h1>
         <p className="mt-2 text-zinc-600">Log in to see your account.</p>
@@ -43,8 +43,8 @@ export default async function AccountPage() {
   const missingAddress = user.role === "CUSTOMER" && addressCount === 0;
 
   return (
-    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-8 px-6 py-16">
-      <h1 className="font-[family-name:var(--font-heading)] text-2xl font-bold text-zinc-900">
+    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-8 px-4 py-12 sm:px-6 sm:py-16">
+      <h1 className="font-[family-name:var(--font-heading)] text-xl font-bold text-zinc-900 sm:text-2xl">
         Hi, {user.name}
       </h1>
 

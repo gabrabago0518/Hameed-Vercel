@@ -73,7 +73,7 @@ export default async function MenuPage() {
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-12">
       <header className="mb-10 text-center">
-        <h1 className="font-[family-name:var(--font-heading)] text-3xl font-bold text-zinc-900">
+        <h1 className="font-[family-name:var(--font-heading)] text-2xl font-bold text-zinc-900 sm:text-3xl">
           {restaurant.name}
         </h1>
         {restaurant.description && (
