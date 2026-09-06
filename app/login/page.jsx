@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { loginAction } from "./actions.js";
 
@@ -8,6 +8,20 @@ const initialState = { error: null };
 
 export default function LoginPage() {
   const [state, formAction, pending] = useActionState(loginAction, initialState);
+  const passwordRef = useRef(null);
+
+  // Both inputs are uncontrolled, so by default the browser just leaves
+  // whatever was typed in place after a failed attempt — including the
+  // password. By request: only the password should clear on a wrong
+  // email/password, so the customer doesn't have to retype their email too.
+  // Imperatively clearing the DOM node (rather than lifting this into React
+  // state) is the right tool here — the email input is left completely
+  // alone.
+  useEffect(() => {
+    if (state.error && passwordRef.current) {
+      passwordRef.current.value = "";
+    }
+  }, [state]);
 
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-6 py-16">
@@ -38,6 +52,7 @@ export default function LoginPage() {
             name="password"
             type="password"
             required
+            ref={passwordRef}
             className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none"
           />
         </div>
