@@ -183,8 +183,8 @@ export default async function OrderConfirmationPage({ params }) {
   const trackerStages = buildOrderTracker(order);
 
   return (
-    <main className="mx-auto w-full max-w-lg flex-1 px-6 py-12">
-      <h1 className="mb-2 font-[family-name:var(--font-heading)] text-2xl font-bold text-zinc-900">
+    <main className="mx-auto w-full max-w-lg flex-1 px-4 py-10 sm:px-6 sm:py-12">
+      <h1 className="mb-2 font-[family-name:var(--font-heading)] text-xl font-bold text-zinc-900 sm:text-2xl">
         Order placed!
       </h1>
       <p className="mb-8 text-sm text-zinc-600">

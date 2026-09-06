@@ -11,7 +11,7 @@ export default function SignupPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-6 py-16">
-      <h1 className="font-[family-name:var(--font-heading)] text-2xl font-bold text-zinc-900">
+      <h1 className="font-[family-name:var(--font-heading)] text-xl font-bold text-zinc-900 sm:text-2xl">
         Create an account
       </h1>
 

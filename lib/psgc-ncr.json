@@ -1,7 +1,7 @@
 [
   {
     "code": "80100",
-    "name": "City of Caloocan",
+    "name": "Caloocan",
     "barangays": [
       "Barangay 1",
       "Barangay 2",
@@ -200,7 +200,7 @@
   },
   {
     "code": "80200",
-    "name": "City of Las Piñas",
+    "name": "Las Piñas",
     "barangays": [
       "Almanza Dos",
       "Almanza Uno",
@@ -226,7 +226,7 @@
   },
   {
     "code": "80300",
-    "name": "City of Makati",
+    "name": "Makati",
     "barangays": [
       "Bangkal",
       "Bel-Air",
@@ -255,7 +255,7 @@
   },
   {
     "code": "80400",
-    "name": "City of Malabon",
+    "name": "Malabon",
     "barangays": [
       "Acacia",
       "Baritan",
@@ -282,7 +282,7 @@
   },
   {
     "code": "80500",
-    "name": "City of Mandaluyong",
+    "name": "Mandaluyong",
     "barangays": [
       "Addition Hills",
       "Bagong Silang",
@@ -315,7 +315,7 @@
   },
   {
     "code": "80600",
-    "name": "City of Manila",
+    "name": "Manila",
     "barangays": [
       "Barangay 1",
       "Barangay 2",
@@ -1218,7 +1218,7 @@
   },
   {
     "code": "80700",
-    "name": "City of Marikina",
+    "name": "Marikina",
     "barangays": [
       "Barangka",
       "Calumpang",
@@ -1240,7 +1240,7 @@
   },
   {
     "code": "80800",
-    "name": "City of Muntinlupa",
+    "name": "Muntinlupa",
     "barangays": [
       "Alabang",
       "Bayanan",
@@ -1255,7 +1255,7 @@
   },
   {
     "code": "80900",
-    "name": "City of Navotas",
+    "name": "Navotas",
     "barangays": [
       "Bagumbayan North",
       "Bagumbayan South",
@@ -1279,7 +1279,7 @@
   },
   {
     "code": "81000",
-    "name": "City of Parañaque",
+    "name": "Parañaque",
     "barangays": [
       "B. F. Homes",
       "Baclaran",
@@ -1301,7 +1301,7 @@
   },
   {
     "code": "81200",
-    "name": "City of Pasig",
+    "name": "Pasig",
     "barangays": [
       "Bagong Ilog",
       "Bagong Katipunan",
@@ -1337,7 +1337,7 @@
   },
   {
     "code": "81400",
-    "name": "City of San Juan",
+    "name": "San Juan",
     "barangays": [
       "Addition Hills",
       "Balong-Bato",
@@ -1364,7 +1364,7 @@
   },
   {
     "code": "81500",
-    "name": "City of Taguig",
+    "name": "Taguig",
     "barangays": [
       "Bagumbayan",
       "Bambang",
@@ -1408,7 +1408,7 @@
   },
   {
     "code": "81600",
-    "name": "City of Valenzuela",
+    "name": "Valenzuela",
     "barangays": [
       "Arkong Bato",
       "Bagbaguin",

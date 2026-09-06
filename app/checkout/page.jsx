@@ -14,7 +14,7 @@ export default async function CheckoutPage() {
   if (items.length === 0) {
     return (
       <main className="flex flex-1 flex-col items-center justify-center px-6 py-24 text-center">
-        <h1 className="font-[family-name:var(--font-heading)] text-2xl font-bold text-zinc-900">
+        <h1 className="font-[family-name:var(--font-heading)] text-xl font-bold text-zinc-900 sm:text-2xl">
           Checkout
         </h1>
         <p className="mt-2 text-zinc-600">Your cart is empty.</p>

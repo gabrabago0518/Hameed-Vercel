@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { UserRound } from "lucide-react";
+import { Home, UtensilsCrossed, UserRound } from "lucide-react";
 import { logoutAction } from "../logout/actions.js";
 import HeaderCartButton from "./HeaderCartButton.jsx";
 
@@ -11,38 +11,56 @@ import HeaderCartButton from "./HeaderCartButton.jsx";
 export default function Header({ user, cartCount }) {
   return (
     <header className="sticky top-0 z-10 bg-red-600 shadow-md">
-      <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-4">
-        {/* A white silhouette of the logo (public/branding/logo-white.webp,
-            generated from the original's alpha channel) reads cleanly
-            directly on this bar's red-600 background — the original red
-            version didn't (confirmed by compositing it before shipping
-            that version), which is why a white badge was here briefly. */}
-        <Link href="/" className="flex items-center">
+      {/* Every size here is mobile-first (smaller by default, sm: raises it
+          back up to the original desktop sizing) — with 4 nav items (Home,
+          Menu, Account, Cart) all at the old flat text-lg/gap-8, this
+          overflowed/crowded badly on a real phone; customers reported the
+          header text as "too big" right after Home was added. */}
+      <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-3 py-3 sm:px-6 sm:py-4">
+        {/* The full circular badge logo (public/branding/logo-stroke.webp)
+            reads cleanly directly on this bar's red-600 background — unlike
+            the original plain red logo (invisible on red, confirmed by
+            compositing it before shipping a white-silhouette workaround),
+            this version has its own white background + black stroke baked
+            into the artwork, so it needs no separate badge/backdrop here. */}
+        <Link href="/" className="flex shrink-0 items-center">
           <Image
-            src="/branding/logo-white.webp"
+            src="/branding/logo-stroke.webp"
             alt="Hameed the Love Recipe"
             width={48}
             height={48}
-            className="h-12 w-12"
+            className="h-9 w-9 sm:h-12 sm:w-12"
             priority
           />
         </Link>
 
-        <nav className="flex items-center gap-8">
+        <nav className="flex items-center gap-3 sm:gap-8">
+          {/* Icon-only on mobile (text takes up too much room at this width,
+              per request) — the label reappears at sm: alongside the icon.
+              Home is an explicit link, by request — some customers didn't
+              realize the logo itself already links home. */}
+          <Link
+            href="/"
+            className="flex items-center gap-2 font-[family-name:var(--font-heading)] text-white/90 hover:text-white sm:text-lg"
+          >
+            <Home size={20} className="sm:h-6 sm:w-6" />
+            <span className="hidden sm:inline">Home</span>
+          </Link>
           <Link
             href="/menu"
-            className="font-[family-name:var(--font-heading)] text-lg text-white/90 hover:text-white"
+            className="flex items-center gap-2 font-[family-name:var(--font-heading)] text-white/90 hover:text-white sm:text-lg"
           >
-            Menu
+            <UtensilsCrossed size={20} className="sm:h-6 sm:w-6" />
+            <span className="hidden sm:inline">Menu</span>
           </Link>
           {user ? (
             <div className="group relative">
               <Link
                 href="/account"
-                className="flex items-center gap-2 font-[family-name:var(--font-heading)] text-lg text-white/90 hover:text-white"
+                className="flex items-center gap-2 font-[family-name:var(--font-heading)] text-white/90 hover:text-white sm:text-lg"
               >
-                <UserRound size={24} />
-                {user.name.split(" ")[0]}
+                <UserRound size={20} className="sm:h-6 sm:w-6" />
+                <span className="hidden sm:inline">{user.name.split(" ")[0]}</span>
               </Link>
               <div className="invisible absolute right-0 top-full pt-2 opacity-0 transition-opacity group-hover:visible group-hover:opacity-100">
                 <div className="w-40 rounded-xl border border-zinc-200 bg-white p-2 shadow-lg">
@@ -89,14 +107,14 @@ export default function Header({ user, cartCount }) {
             <>
               <Link
                 href="/account"
-                className="flex items-center gap-2 font-[family-name:var(--font-heading)] text-lg text-white/90 hover:text-white"
+                className="flex items-center gap-2 font-[family-name:var(--font-heading)] text-white/90 hover:text-white sm:text-lg"
               >
-                <UserRound size={24} />
-                Account
+                <UserRound size={20} className="sm:h-6 sm:w-6" />
+                <span className="hidden sm:inline">Account</span>
               </Link>
               <Link
                 href="/login"
-                className="rounded-full bg-white px-5 py-2 text-lg font-semibold text-red-600 hover:bg-red-50"
+                className="rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-red-600 hover:bg-red-50 sm:px-5 sm:py-2 sm:text-lg"
               >
                 Log in
               </Link>
