@@ -6,6 +6,7 @@ import { getCurrentUser } from "../../lib/session.js";
 import { isProfileComplete } from "../../lib/profile.js";
 import { getFulfillment, setFulfillment, clearFulfillment } from "../../lib/fulfillment.js";
 import { getCartDetails, clearCart } from "../../lib/cart.js";
+import { getDeliveryFee } from "../../lib/deliveryZones.js";
 import { prisma } from "../../lib/prisma.js";
 import { createAndAttachPaymentIntent } from "../../lib/paymongo.js";
 import { resolveBaseUrl } from "../../lib/requestUrl.js";
@@ -74,6 +75,7 @@ export async function placeOrderAction(formData) {
   const isCod = paymentMethod === "CASH_ON_DELIVERY";
 
   let addressId = null;
+  let deliveryFee = 0;
   if (fulfillment.method === "DELIVERY") {
     if (!(await isProfileComplete(user))) {
       redirect("/account");
@@ -89,9 +91,9 @@ export async function placeOrderAction(formData) {
       redirect("/checkout/delivery?error=no_fulfillment");
     }
     addressId = address.id;
+    deliveryFee = getDeliveryFee(address.city);
   }
 
-  const deliveryFee = 0;
   const orderTotal = total + deliveryFee;
 
   // The amount the customer says they'll hand over in cash — collected on

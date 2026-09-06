@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "../../../lib/session.js";
 import { getCartDetails } from "../../../lib/cart.js";
 import { getFulfillment } from "../../../lib/fulfillment.js";
+import { getDeliveryFee } from "../../../lib/deliveryZones.js";
 import { prisma } from "../../../lib/prisma.js";
 import { placeOrderAction } from "../actions.js";
 import PaymentMethodSelector from "../PaymentMethodSelector.jsx";
@@ -33,7 +34,17 @@ export default async function CheckoutPaymentPage({ searchParams }) {
     redirect("/checkout/delivery?error=no_fulfillment");
   }
 
-  const selectedBranch = await prisma.branch.findUnique({ where: { id: fulfillment.branchId } });
+  const [selectedBranch, selectedAddress] = await Promise.all([
+    prisma.branch.findUnique({ where: { id: fulfillment.branchId } }),
+    fulfillment.method === "DELIVERY" && fulfillment.addressId
+      ? prisma.address.findUnique({ where: { id: fulfillment.addressId } })
+      : null,
+  ]);
+
+  // Mirrors placeOrderAction's own calculation exactly, so what's shown here
+  // is always what actually gets charged — see lib/deliveryZones.js.
+  const deliveryFee = selectedAddress ? getDeliveryFee(selectedAddress.city) : 0;
+  const orderTotal = total + deliveryFee;
 
   return (
     <main className="mx-auto w-full max-w-lg flex-1 px-4 py-10 sm:px-6 sm:py-12">
@@ -72,9 +83,21 @@ export default async function CheckoutPaymentPage({ searchParams }) {
             </div>
           ))}
         </div>
-        <div className="mt-3 flex justify-between border-t border-zinc-100 pt-3 text-sm font-semibold text-zinc-900">
-          <span>Total</span>
-          <span className="text-red-600">₱{total.toFixed(2)}</span>
+        <div className="mt-3 flex flex-col gap-1 border-t border-zinc-100 pt-3 text-sm">
+          <div className="flex justify-between text-zinc-600">
+            <span>Subtotal</span>
+            <span>₱{total.toFixed(2)}</span>
+          </div>
+          {fulfillment.method === "DELIVERY" && (
+            <div className="flex justify-between text-zinc-600">
+              <span>Delivery fee{selectedAddress ? ` (${selectedAddress.city})` : ""}</span>
+              <span>₱{deliveryFee.toFixed(2)}</span>
+            </div>
+          )}
+          <div className="mt-1 flex justify-between border-t border-zinc-100 pt-2 font-semibold text-zinc-900">
+            <span>Total</span>
+            <span className="text-red-600">₱{orderTotal.toFixed(2)}</span>
+          </div>
         </div>
         <p className="mt-3 border-t border-zinc-100 pt-3 text-sm text-zinc-600">
           {fulfillment.method === "DELIVERY"
@@ -88,7 +111,7 @@ export default async function CheckoutPaymentPage({ searchParams }) {
           How would you like to pay?
         </h2>
 
-        <PaymentMethodSelector total={total} action={placeOrderAction} />
+        <PaymentMethodSelector total={orderTotal} action={placeOrderAction} />
       </section>
     </main>
   );
