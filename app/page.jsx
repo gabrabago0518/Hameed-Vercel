@@ -5,6 +5,7 @@ import ResellerSection from "./components/ResellerSection.jsx";
 import BlogSection from "./components/BlogSection.jsx";
 import CustomerGallery from "./components/CustomerGallery.jsx";
 import NewsSection from "./components/NewsSection.jsx";
+import StoreLocationsSection from "./components/StoreLocationsSection.jsx";
 import TestimonialsSection from "./components/TestimonialsSection.jsx";
 
 // The Pares and Bulalo slides that used to be here were removed — both
@@ -56,6 +57,7 @@ export default function Home() {
       <BlogSection />
       <CustomerGallery />
       <NewsSection />
+      <StoreLocationsSection />
       <TestimonialsSection />
     </main>
   );
