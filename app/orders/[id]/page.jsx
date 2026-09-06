@@ -7,6 +7,7 @@ import { buildOrderTracker } from "../../../lib/orderStatus.js";
 import { getOrderItemLineTotal, getOrderItemChoiceLabels } from "../../../lib/orderItemDisplay.js";
 import OrderStatusPoller from "../../components/OrderStatusPoller.jsx";
 import OrderTracker from "../../components/OrderTracker.jsx";
+import GCashLogo from "../../components/GCashLogo.jsx";
 
 function PaymentSection({ order }) {
   const payment = order.payment;
@@ -106,20 +107,27 @@ function PaymentSection({ order }) {
     );
   }
 
+  // Checked by whether PayMongo actually gave us a redirect link, not by our
+  // own payment.method value — "Pay via QR code" currently attaches a GCash
+  // payment method under the hood too (see lib/paymongo.js), so it gets this
+  // same button until real QRPh is wired up.
+  const isGcashFlow = Boolean(payment.paymongoCheckoutUrl);
+
   return (
     <section className="mt-6 rounded-2xl border border-zinc-200 bg-white p-5 text-center">
       <h2 className="font-[family-name:var(--font-heading)] text-lg font-semibold text-zinc-900">
-        Pay via {payment.method === "GCASH" ? "GCash" : "QR code"}
+        Pay via {isGcashFlow ? "GCash" : "QR code"}
       </h2>
 
-      {payment.method === "GCASH" && payment.paymongoCheckoutUrl && (
+      {isGcashFlow && (
         <>
           <a
             href={payment.paymongoCheckoutUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 inline-block rounded-full bg-red-600 px-8 py-3 text-base font-semibold text-white transition-colors hover:bg-red-700"
+            className="mt-4 inline-flex items-center gap-2 rounded-full bg-red-600 px-8 py-3 text-base font-semibold text-white transition-colors hover:bg-red-700"
           >
+            <GCashLogo className="h-5 w-5 shrink-0" />
             Continue to GCash
           </a>
           <p className="mt-3 text-xs text-zinc-500">
@@ -129,7 +137,7 @@ function PaymentSection({ order }) {
         </>
       )}
 
-      {payment.method === "QR_CODE" && payment.paymongoQrCodeData && (
+      {!isGcashFlow && payment.paymongoQrCodeData && (
         <div className="mx-auto mt-4 h-48 w-48 overflow-hidden rounded-xl border border-zinc-200">
           <Image
             src={payment.paymongoQrCodeData}

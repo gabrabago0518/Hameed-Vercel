@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import GCashLogo from "../../../components/GCashLogo.jsx";
 
 const POLL_INTERVAL_MS = 4000;
 const IS_COD = (method) => method === "CASH_ON_DELIVERY";
@@ -192,14 +193,19 @@ export default function ConfirmationStatus({
         Waiting for payment
       </h1>
 
-      {paymentMethod === "GCASH" && checkoutUrl && (
+      {/* Checked by whether PayMongo actually gave us a redirect link, not by
+          our own paymentMethod value — "Pay via QR code" currently attaches
+          a GCash payment method under the hood too (see lib/paymongo.js), so
+          it gets this same button until real QRPh is wired up. */}
+      {checkoutUrl && (
         <>
           <a
             href={checkoutUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-6 flex min-h-11 w-full items-center justify-center rounded-full bg-red-600 px-8 py-3 text-base font-semibold text-white transition-colors hover:bg-red-700"
+            className="mt-6 flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-red-600 px-8 py-3 text-base font-semibold text-white transition-colors hover:bg-red-700"
           >
+            <GCashLogo className="h-5 w-5 shrink-0" />
             Pay with GCash
           </a>
           <p className="mt-3 text-xs text-zinc-500">
@@ -209,7 +215,7 @@ export default function ConfirmationStatus({
         </>
       )}
 
-      {paymentMethod === "QR_CODE" && qrCodeData && (
+      {!checkoutUrl && qrCodeData && (
         <div className="mx-auto mt-6 h-48 w-48 overflow-hidden rounded-xl border border-zinc-200">
           <Image
             src={qrCodeData}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import GCashLogo from "../components/GCashLogo.jsx";
 
 const METHODS = [
   {
@@ -48,7 +49,10 @@ export default function PaymentMethodSelector({ total, action }) {
                   : "border-zinc-200 hover:border-red-300"
               }`}
             >
-              <p className="font-semibold text-zinc-900">{option.title}</p>
+              <p className="flex items-center gap-1.5 font-semibold text-zinc-900">
+                {option.value === "GCASH" && <GCashLogo className="h-5 w-5 shrink-0" />}
+                {option.title}
+              </p>
               <p className="mt-1 text-sm text-zinc-600">{option.description}</p>
             </button>
           );
