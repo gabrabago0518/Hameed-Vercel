@@ -32,7 +32,7 @@ export const restaurantSeedData = {
   branches: {
     create: [
       {
-        name: "Maharlika Branch",
+        name: "Lower Bicutan Branch",
         address: "Maharlika Village",
         city: "Taguig City",
       },
