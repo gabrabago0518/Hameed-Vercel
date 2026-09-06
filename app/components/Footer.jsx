@@ -43,7 +43,7 @@ export default function Footer() {
             </li>
             <li className="flex items-start gap-2">
               <MapPin size={16} className="mt-0.5 shrink-0" />
-              <span>Maharlika Village &amp; New Lower Bicutan, Taguig City</span>
+              <span>Lower Bicutan &amp; New Lower Bicutan, Taguig City</span>
             </li>
             <li className="flex items-start gap-2">
               <Clock size={16} className="mt-0.5 shrink-0" />
