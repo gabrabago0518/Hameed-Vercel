@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyWebhookSignature } from "../../../../lib/paymongo.js";
 import { markOrderPaid, markOrderPaymentFailed } from "../../../../lib/orderPayment.js";
+import { sendAdminAlertEmail } from "../../../../lib/mailer.js";
 import { prisma } from "../../../../lib/prisma.js";
 
 // PayMongo webhook event shapes (from their docs — NOT yet verified against a
@@ -100,11 +101,17 @@ export async function POST(request) {
     const expectedCentavos = Math.round(Number(payment.amount) * 100);
     if (paidAmountCentavos !== null && paidAmountCentavos !== expectedCentavos) {
       // Don't silently trust a mismatched amount — this needs a human to
-      // look at it. There's no alerting set up yet, so this only logs; wire
-      // this into real alerting (email/Slack/etc.) before going live.
-      console.error(
-        `Amount mismatch for order ${payment.orderId}: expected ${expectedCentavos}, got ${paidAmountCentavos}`
-      );
+      // look at it, so it's emailed to ADMIN_EMAIL on top of the log line.
+      const detail = `Order ${payment.orderId}: expected ${expectedCentavos} centavos, PayMongo's webhook reported ${paidAmountCentavos}.\nPayment Intent: ${paymentIntentId}\nWebhook event: ${eventId}`;
+      console.error(`Amount mismatch — ${detail}`);
+      try {
+        await sendAdminAlertEmail({
+          subject: "Payment amount mismatch — order NOT marked paid",
+          message: detail,
+        });
+      } catch (alertError) {
+        console.error("Failed to send amount-mismatch alert email:", alertError.message);
+      }
     } else {
       await markOrderPaid(payment.orderId);
     }

@@ -38,6 +38,7 @@ model User {
   addresses               Address[]
   orders                  Order[]
   emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens     PasswordResetToken[]
   codVerifications        Payment[]                @relation("CodVerifications")
   orderStatusChanges      OrderStatusHistory[]
 
@@ -57,6 +58,25 @@ model EmailVerificationToken {
   user User @relation(fields: [userId], references: [id])
 
   @@map("email_verification_tokens")
+}
+
+// Mirrors EmailVerificationToken's shape exactly — same single-use,
+// expiring-token pattern, just for "set a new password" instead of "confirm
+// this email." Kept as its own model rather than reused, since the two
+// tokens mean different things and shouldn't be interchangeable (using an
+// old verification link to reset a password, or vice versa, should never
+// work).
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("password_reset_tokens")
 }
 
 model Address {
