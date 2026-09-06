@@ -9,9 +9,8 @@ export default function Footer() {
           <h3 className="font-[family-name:var(--font-heading)] text-lg uppercase tracking-wide text-white">
             Hameed the Love Recipe
           </h3>
-          <p className="mt-2 text-sm">
-            Authentic Filipino-Muslim pastil, cooked the way it's always been
-            — delivered fast around Taguig City.
+          <p className="mt-2 text-base" lang="ar" dir="rtl">
+            ٱلْحَمْدُ لِلَّٰهِ
           </p>
           <div className="mt-4 flex gap-4">
             <a
@@ -44,7 +43,7 @@ export default function Footer() {
             </li>
             <li className="flex items-start gap-2">
               <MapPin size={16} className="mt-0.5 shrink-0" />
-              <span>Maharlika Village &amp; New Lower Bicutan, Taguig City</span>
+              <span>Lower Bicutan &amp; New Lower Bicutan, Taguig City</span>
             </li>
             <li className="flex items-start gap-2">
               <Clock size={16} className="mt-0.5 shrink-0" />
