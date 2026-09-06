@@ -67,7 +67,11 @@ function StatCard({ label, value }) {
 }
 
 export default async function AdminOverviewPage() {
-  const [stats, sevenDay] = await Promise.all([getTodayStats(), getSevenDaySales()]);
+  const [stats, sevenDay, customerCount] = await Promise.all([
+    getTodayStats(),
+    getSevenDaySales(),
+    prisma.user.count({ where: { role: "CUSTOMER" } }),
+  ]);
   const maxDay = Math.max(1, ...sevenDay.map((d) => d.total));
 
   return (
@@ -80,6 +84,7 @@ export default async function AdminOverviewPage() {
         <StatCard label="Pending" value={stats.pending} />
         <StatCard label="Preparing" value={stats.preparing} />
         <StatCard label="Delivered today" value={stats.delivered} />
+        <StatCard label="Customers" value={customerCount} />
       </div>
 
       <div className="rounded-2xl border border-zinc-200 bg-white p-5">

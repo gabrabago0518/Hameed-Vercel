@@ -1,6 +1,7 @@
 import { requireAdmin } from "../../../lib/roleGuard.js";
 import { prisma } from "../../../lib/prisma.js";
 import { changeUserRoleAction, deleteUserAction } from "./actions.js";
+import DeleteAccountForm from "./DeleteAccountForm.jsx";
 
 const ROLES = ["CUSTOMER", "STAFF", "ADMIN"];
 
@@ -71,15 +72,11 @@ export default async function AdminAccountsPage() {
                         Has {orderCount} order{orderCount === 1 ? "" : "s"} — can&apos;t delete
                       </span>
                     ) : (
-                      <form action={deleteUserAction}>
-                        <input type="hidden" name="userId" value={user.id} />
-                        <button
-                          type="submit"
-                          className="rounded-lg border border-red-300 px-3 py-1 text-xs font-semibold text-red-600 hover:bg-red-50"
-                        >
-                          Delete
-                        </button>
-                      </form>
+                      <DeleteAccountForm
+                        action={deleteUserAction}
+                        userId={user.id}
+                        userName={user.name}
+                      />
                     )}
                   </td>
                 </tr>
