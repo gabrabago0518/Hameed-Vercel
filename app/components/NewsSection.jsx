@@ -1,20 +1,19 @@
 import Image from "next/image";
 
-// Static list — swap in real clips as they're provided. `poster` is the
-// thumbnail shown before the viewer presses play (required so the video file
-// itself never loads until they do — see `preload="none"` below). A plain
-// photo entry (no `src`/`poster` pair, just `photo`) renders as a still image
-// instead of a <video> — used for real press coverage that only exists as a
-// photo of the broadcast (a TV screenshot), not an actual video file.
+// Both slots are real photos now — the TV-segment photo originally placed
+// here (trending-right-now.webp) was moved to the "Why Pastil Is Trending
+// Right Now" blog post instead, and these two dedicated "as seen on tv"
+// photos took its place. `photo` renders a still image instead of a
+// <video> — kept as the supported shape (alongside `src`/`poster` for an
+// actual video clip) in case a real video ever replaces one of these.
 const newsClips = [
   {
-    photo: "/images/news/trending-right-now.webp",
-    credit: "Featured on One PH's Inay Ko Po — “Trending Chicken Pastil”",
+    photo: "/images/news/as-seen-on-tv-1.webp",
+    credit: "Featured on TV",
   },
   {
-    src: "/videos/news/clip-2.mp4",
-    poster: "/images/news/clip-2-poster.webp",
-    credit: "Featured on [Show Name], [Date]",
+    photo: "/images/news/as-seen-on-tv-2.webp",
+    credit: "Featured on TV",
   },
 ];
 

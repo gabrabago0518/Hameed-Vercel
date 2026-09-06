@@ -3,7 +3,7 @@ import Image from "next/image";
 // Static list — filenames map straight to public/images/customers/. Swap the
 // array (or the count) once real customer photos are dropped in; nothing
 // else about the section needs to change.
-const photos = Array.from({ length: 10 }, (_, i) => ({
+const photos = Array.from({ length: 12 }, (_, i) => ({
   src: `/images/customers/customer-${i + 1}.webp`,
   alt: `Customer enjoying Hameed's food`,
 }));

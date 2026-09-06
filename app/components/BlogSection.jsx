@@ -11,21 +11,21 @@ export const blogPosts = [
     title: "The Story Behind Our Pastil Recipe",
     excerpt:
       "Every family in Mindanao has their own way of making pastil. Here's how ours came to be, and why we've never changed it.",
-    image: "/images/blog/post-1.webp",
+    image: "/images/blog/story-behind-our-pastil-recipe.webp",
   },
   {
     slug: "why-pastil-is-trending",
     title: "Why Pastil Is Trending Right Now",
     excerpt:
       "From a home-cooked Mindanaoan staple to a Metro Manila food trend — a quick look at pastil's moment in the spotlight.",
-    image: "/images/blog/post-2.webp",
+    image: "/images/blog/why-pastil-is-trending.webp",
   },
   {
     slug: "how-we-pack-your-order",
     title: "How We Pack Every Order for Delivery",
     excerpt:
       "Banana leaf, sealed containers, and a lot of care — a behind-the-scenes look at how your food travels from our kitchen to your door.",
-    image: "/images/blog/post-3.webp",
+    image: "/images/blog/how-we-pack-your-order.webp",
   },
 ];
 
