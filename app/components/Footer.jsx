@@ -9,7 +9,7 @@ export default function Footer() {
           <h3 className="font-[family-name:var(--font-heading)] text-lg uppercase tracking-wide text-white">
             Hameed the Love Recipe
           </h3>
-          <p className="mt-2 text-base" lang="ar" dir="rtl">
+          <p className="mt-2 text-left text-base" lang="ar" dir="rtl">
             ٱلْحَمْدُ لِلَّٰهِ
           </p>
           <div className="mt-4 flex gap-4">
