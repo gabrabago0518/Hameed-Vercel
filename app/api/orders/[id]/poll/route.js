@@ -43,7 +43,23 @@ export async function GET(request, { params }) {
         const status = intent.attributes.status;
 
         if (status === "succeeded") {
-          await markOrderPaid(order.id);
+          // Same guard the webhook applies (see app/api/webhooks/paymongo) —
+          // never mark an order paid just because PayMongo says "succeeded"
+          // without also confirming it succeeded for the exact amount this
+          // order was created for. In practice a GCash/QR Payment Intent's
+          // amount can't be changed by the customer (they can only approve
+          // or decline the exact amount it was created with), so this should
+          // never actually fire — it's a defensive check, not a real-world
+          // path, kept here for the same reason the webhook has one.
+          const paidCentavos = intent.attributes.amount;
+          const expectedCentavos = Math.round(Number(payment.amount) * 100);
+          if (paidCentavos !== expectedCentavos) {
+            console.error(
+              `Poll: amount mismatch for order ${order.id}: expected ${expectedCentavos}, got ${paidCentavos}`
+            );
+          } else {
+            await markOrderPaid(order.id);
+          }
         } else if (intent.attributes.last_payment_error || status === "awaiting_payment_method") {
           // Two different failure signals, because a declined payment and an
           // expired/abandoned Source don't necessarily look the same:
