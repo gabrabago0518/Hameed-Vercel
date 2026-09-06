@@ -38,7 +38,9 @@ export default function Footer() {
           <ul className="mt-3 flex flex-col gap-2 text-sm">
             <li className="flex items-start gap-2">
               <Phone size={16} className="mt-0.5 shrink-0" />
-              <span>0917 000 0000</span>
+              <a href="tel:+639774230395" className="hover:text-white hover:underline">
+                0977 423 0395
+              </a>
             </li>
             <li className="flex items-start gap-2">
               <MapPin size={16} className="mt-0.5 shrink-0" />
