@@ -36,8 +36,10 @@ export default function ResellerSection() {
             No experience needed — we&apos;ll walk you through pricing and
             how it works. Message us to get started.
           </p>
-          {/* Same placeholder Facebook link used in the footer — swap both
-              for the real Page URL once there is one. */}
+          {/* Same placeholder Facebook link used in the footer — the page
+              name ("Hameed the Love Recipe") is confirmed real (it's on the
+              reseller banner above), but the exact Page URL still isn't
+              known, so the href stays a placeholder until it is. */}
           <a
             href="https://facebook.com"
             target="_blank"
@@ -46,6 +48,12 @@ export default function ResellerSection() {
           >
             Message Us on Facebook
           </a>
+          <p className="mt-3 text-sm text-zinc-600">
+            Or call/text{" "}
+            <a href="tel:+639774230395" className="font-semibold text-red-600 hover:underline">
+              0977 423 0395
+            </a>
+          </p>
         </div>
       </div>
     </section>
