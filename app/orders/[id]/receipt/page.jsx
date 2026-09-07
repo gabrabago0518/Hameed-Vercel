@@ -4,6 +4,7 @@ import { getCurrentUser } from "../../../../lib/session.js";
 import { prisma } from "../../../../lib/prisma.js";
 import { getOrderItemLineTotal, getOrderItemChoiceLabels } from "../../../../lib/orderItemDisplay.js";
 import { PAYMENT_METHOD_LABELS } from "../../../../lib/orderStatus.js";
+import { formatManilaDate, formatManilaTime } from "../../../../lib/timezone.js";
 import PrintButton from "./PrintButton.jsx";
 
 // A standalone, print-friendly view of one order — deliberately separate
@@ -89,8 +90,7 @@ export default async function OrderReceiptPage({ params }) {
           <div className="flex justify-between">
             <span>Date</span>
             <span>
-              {order.createdAt.toLocaleDateString()}{" "}
-              {order.createdAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+              {formatManilaDate(order.createdAt)} {formatManilaTime(order.createdAt)}
             </span>
           </div>
           <div className="flex justify-between">

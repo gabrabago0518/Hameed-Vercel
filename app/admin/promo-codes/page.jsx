@@ -1,4 +1,5 @@
 import { prisma } from "../../../lib/prisma.js";
+import { formatManilaDate } from "../../../lib/timezone.js";
 import { togglePromoCodeActiveAction } from "./actions.js";
 import CreatePromoCodeForm from "./CreatePromoCodeForm.jsx";
 
@@ -64,7 +65,7 @@ export default async function AdminPromoCodesPage() {
                       {promoCode.maxUses !== null ? ` / ${promoCode.maxUses}` : ""} time
                       {promoCode.usedCount === 1 ? "" : "s"}
                       {promoCode.expiresAt
-                        ? ` · expires ${promoCode.expiresAt.toLocaleDateString()}`
+                        ? ` · expires ${formatManilaDate(promoCode.expiresAt)}`
                         : ""}
                     </p>
                   </div>

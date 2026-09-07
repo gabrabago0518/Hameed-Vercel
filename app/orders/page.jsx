@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "../../lib/session.js";
 import { prisma } from "../../lib/prisma.js";
 import { STATUS_LABELS } from "../../lib/orderStatus.js";
+import { formatManilaDate, formatManilaTime } from "../../lib/timezone.js";
 
 export default async function OrderHistoryPage() {
   const user = await getCurrentUser();
@@ -34,11 +35,7 @@ export default async function OrderHistoryPage() {
             >
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-zinc-900">
-                  {order.createdAt.toLocaleDateString()}{" "}
-                  {order.createdAt.toLocaleTimeString([], {
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })}
+                  {formatManilaDate(order.createdAt)} {formatManilaTime(order.createdAt)}
                 </span>
                 <span className="text-sm font-semibold text-red-600">
                   ₱{Number(order.total).toFixed(2)}

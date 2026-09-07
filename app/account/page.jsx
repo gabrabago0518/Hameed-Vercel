@@ -4,6 +4,7 @@ import { logoutAction } from "../logout/actions.js";
 import { savePhoneAction } from "./actions.js";
 import { prisma } from "../../lib/prisma.js";
 import { STATUS_LABELS } from "../../lib/orderStatus.js";
+import { formatManilaDate, formatManilaTime } from "../../lib/timezone.js";
 import PhoneField from "../components/PhoneField.jsx";
 
 export default async function AccountPage() {
@@ -127,11 +128,7 @@ export default async function AccountPage() {
               <div key={order.id} className="rounded-xl border border-zinc-100 p-3 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-zinc-900">
-                    {order.createdAt.toLocaleDateString()}{" "}
-                    {order.createdAt.toLocaleTimeString([], {
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })}
+                    {formatManilaDate(order.createdAt)} {formatManilaTime(order.createdAt)}
                   </span>
                   <span className="font-semibold text-red-600">
                     ₱{Number(order.total).toFixed(2)}
