@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { getNcrCities, getBarangaysForCity } from "../../lib/psgc.js";
+import FormSpinner from "./FormSpinner.jsx";
 
 const LABEL_OPTIONS = ["Home", "Office", "Other"];
 const CITIES = getNcrCities();
@@ -31,6 +32,7 @@ export default function AddressForm({
 
   return (
     <form action={action} className="flex flex-col gap-4">
+      <FormSpinner />
       {initialAddress && <input type="hidden" name="addressId" value={initialAddress.id} />}
       {redirectTo && <input type="hidden" name="redirectTo" value={redirectTo} />}
       {errorRedirectTo && <input type="hidden" name="errorRedirectTo" value={errorRedirectTo} />}

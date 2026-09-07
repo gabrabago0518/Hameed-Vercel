@@ -4,8 +4,16 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { prisma } from "../../lib/prisma.js";
 import { issueVerificationEmail } from "../../lib/emailVerification.js";
+import { checkSignupRateLimit } from "../../lib/signupThrottle.js";
+import { getClientIp } from "../../lib/clientIp.js";
 
 export async function signupAction(prevState, formData) {
+  const ip = await getClientIp();
+  const { limited } = await checkSignupRateLimit(ip);
+  if (limited) {
+    return { error: "Too many accounts created from this connection. Please try again later." };
+  }
+
   const firstName = formData.get("firstName")?.toString().trim();
   const lastName = formData.get("lastName")?.toString().trim();
   const email = formData.get("email")?.toString().trim().toLowerCase();

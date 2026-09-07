@@ -1,12 +1,16 @@
 import Link from "next/link";
 import { requireAdmin } from "../../lib/roleGuard.js";
 import { logoutAction } from "../logout/actions.js";
+import FormSpinner from "../components/FormSpinner.jsx";
 
 const NAV_LINKS = [
   { href: "/admin", label: "Overview" },
   { href: "/admin/orders", label: "Orders" },
   { href: "/admin/accounts", label: "Accounts" },
+  { href: "/admin/riders", label: "Riders" },
+  { href: "/admin/promo-codes", label: "Promo codes" },
   { href: "/admin/sales", label: "Sales" },
+  { href: "/admin/staff-performance", label: "Staff performance" },
 ];
 
 export default async function AdminLayout({ children }) {
@@ -30,6 +34,7 @@ export default async function AdminLayout({ children }) {
         <div className="flex items-center gap-4 text-sm text-zinc-600">
           <span>{user.name}</span>
           <form action={logoutAction}>
+            <FormSpinner />
             <button type="submit" className="font-medium text-red-600 hover:underline">
               Log out
             </button>

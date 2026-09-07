@@ -31,11 +31,11 @@ function PaymentSection({ order }) {
       );
     }
 
-    if (order.status === "CANCELLED") {
+    if (order.status === "CANCELLED" || order.status === "REFUNDED") {
       return (
         <section className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-5 text-center">
           <h2 className="font-[family-name:var(--font-heading)] text-lg font-semibold text-red-800">
-            Order cancelled
+            {order.status === "REFUNDED" ? "Order refunded" : "Order cancelled"}
           </h2>
         </section>
       );
@@ -62,6 +62,19 @@ function PaymentSection({ order }) {
         </h2>
         <p className="mt-2 text-sm text-emerald-700">
           We're preparing your order now.
+        </p>
+      </section>
+    );
+  }
+
+  if (payment.status === "REFUNDED") {
+    return (
+      <section className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-5 text-center">
+        <h2 className="font-[family-name:var(--font-heading)] text-lg font-semibold text-red-800">
+          Order refunded
+        </h2>
+        <p className="mt-2 text-sm text-red-700">
+          This order was refunded and is treated as cancelled.
         </p>
       </section>
     );

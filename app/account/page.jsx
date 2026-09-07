@@ -3,8 +3,10 @@ import { getCurrentUser } from "../../lib/session.js";
 import { logoutAction } from "../logout/actions.js";
 import { savePhoneAction } from "./actions.js";
 import { prisma } from "../../lib/prisma.js";
-import { STATUS_LABELS } from "../../lib/orderStatus.js";
+import { STATUS_LABELS, EXCLUDE_ABANDONED_EXPIRED_ORDERS_WHERE } from "../../lib/orderStatus.js";
+import { formatManilaDate, formatManilaTime } from "../../lib/timezone.js";
 import PhoneField from "../components/PhoneField.jsx";
+import FormSpinner from "../components/FormSpinner.jsx";
 
 export default async function AccountPage() {
   const user = await getCurrentUser();
@@ -30,7 +32,7 @@ export default async function AccountPage() {
     prisma.address.findFirst({ where: { userId: user.id, isDefault: true } }),
     prisma.address.count({ where: { userId: user.id } }),
     prisma.order.findMany({
-      where: { userId: user.id },
+      where: { userId: user.id, ...EXCLUDE_ABANDONED_EXPIRED_ORDERS_WHERE },
       orderBy: { createdAt: "desc" },
       take: 5,
       include: { items: { include: { menuItem: true } } },
@@ -127,11 +129,7 @@ export default async function AccountPage() {
               <div key={order.id} className="rounded-xl border border-zinc-100 p-3 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-zinc-900">
-                    {order.createdAt.toLocaleDateString()}{" "}
-                    {order.createdAt.toLocaleTimeString([], {
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })}
+                    {formatManilaDate(order.createdAt)} {formatManilaTime(order.createdAt)}
                   </span>
                   <span className="font-semibold text-red-600">
                     ₱{Number(order.total).toFixed(2)}
@@ -150,6 +148,7 @@ export default async function AccountPage() {
       </section>
 
       <form action={logoutAction}>
+        <FormSpinner />
         <button
           type="submit"
           className="w-full rounded-full border border-zinc-300 px-6 py-2.5 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-50"

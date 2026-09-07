@@ -2,12 +2,16 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { loginAction } from "./actions.js";
+import LoadingOverlay from "../components/LoadingOverlay.jsx";
 
 const initialState = { error: null };
 
 export default function LoginPage() {
   const [state, formAction, pending] = useActionState(loginAction, initialState);
+  const searchParams = useSearchParams();
+  const justResetPassword = searchParams.get("passwordReset") === "1";
   const emailRef = useRef(null);
   const passwordRef = useRef(null);
   const lastEmailRef = useRef("");
@@ -33,6 +37,12 @@ export default function LoginPage() {
         Log in
       </h1>
 
+      {justResetPassword && (
+        <p className="mt-3 text-sm text-emerald-700">
+          Your password has been reset. Log in with your new password.
+        </p>
+      )}
+
       <form
         action={formAction}
         onSubmit={() => {
@@ -40,6 +50,7 @@ export default function LoginPage() {
         }}
         className="mt-6 flex flex-col gap-4"
       >
+        {pending && <LoadingOverlay />}
         <div>
           <label htmlFor="email" className="text-sm font-medium text-zinc-700">
             Email
@@ -55,9 +66,14 @@ export default function LoginPage() {
         </div>
 
         <div>
-          <label htmlFor="password" className="text-sm font-medium text-zinc-700">
-            Password
-          </label>
+          <div className="flex items-baseline justify-between">
+            <label htmlFor="password" className="text-sm font-medium text-zinc-700">
+              Password
+            </label>
+            <Link href="/forgot-password" className="text-xs font-medium text-red-600 hover:underline">
+              Forgot password?
+            </Link>
+          </div>
           <input
             id="password"
             name="password"

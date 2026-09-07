@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import GCashLogo from "../components/GCashLogo.jsx";
+import FormSpinner from "../components/FormSpinner.jsx";
 
 const METHODS = [
   {
@@ -32,6 +33,7 @@ export default function PaymentMethodSelector({ total, action }) {
 
   return (
     <form action={action} className="mt-4 flex flex-col gap-4">
+      <FormSpinner />
       <input type="hidden" name="paymentMethod" value={method} />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">

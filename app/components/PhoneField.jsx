@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import FormSpinner from "./FormSpinner.jsx";
 
 // A PH mobile number's local part always starts with 9, so stripping a
 // leading "63" (country code) or a leading "0" (trunk prefix, if someone
@@ -50,6 +51,7 @@ export default function PhoneField({ phone, action }) {
       }}
       className="mt-4 border-t border-zinc-100 pt-4"
     >
+      <FormSpinner />
       <label htmlFor="phoneLocal" className="text-sm font-medium text-zinc-700">
         Contact number
       </label>

@@ -1,20 +1,19 @@
 import { prisma } from "../../lib/prisma.js";
-
-function startOfDay(date) {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
+import { getManilaDayRange, getManilaDaysAgoStart, formatManilaWeekday } from "../../lib/timezone.js";
+import { EXCLUDE_ABANDONED_EXPIRED_ORDERS_WHERE } from "../../lib/orderStatus.js";
 
 async function getTodayStats() {
-  const start = startOfDay(new Date());
+  // "Today" in Asia/Manila, not the server's own timezone (UTC on Vercel) —
+  // see lib/timezone.js. Previously this used `new Date(); setHours(0,0,0,0)`,
+  // which reset at UTC midnight (8am Manila time) instead of real midnight.
+  const { start } = getManilaDayRange();
 
   const [salesToday, ordersToday, pending, preparing, delivered] = await Promise.all([
     prisma.payment.aggregate({
       where: { status: "PAID", paidAt: { gte: start } },
       _sum: { amount: true },
     }),
-    prisma.order.count({ where: { createdAt: { gte: start } } }),
+    prisma.order.count({ where: { createdAt: { gte: start }, ...EXCLUDE_ABANDONED_EXPIRED_ORDERS_WHERE } }),
     // "Current status as of today" — an order's updatedAt only moves when its
     // status changes, and never changes at all while still PENDING, so this
     // one filter (updatedAt >= start of today) correctly captures "became
@@ -37,15 +36,12 @@ async function getTodayStats() {
 async function getSevenDaySales() {
   const days = [];
   for (let i = 6; i >= 0; i--) {
-    const day = startOfDay(new Date());
-    day.setDate(day.getDate() - i);
-    days.push(day);
+    days.push(getManilaDaysAgoStart(i));
   }
 
   const results = await Promise.all(
     days.map(async (day) => {
-      const nextDay = new Date(day);
-      nextDay.setDate(nextDay.getDate() + 1);
+      const nextDay = new Date(day.getTime() + 24 * 60 * 60 * 1000);
       const sum = await prisma.payment.aggregate({
         where: { status: "PAID", paidAt: { gte: day, lt: nextDay } },
         _sum: { amount: true },
@@ -97,9 +93,7 @@ export default async function AdminOverviewPage() {
                 style={{ height: `${Math.max(4, (total / maxDay) * 100)}%` }}
                 title={`₱${total.toFixed(2)}`}
               />
-              <span className="text-xs text-zinc-500">
-                {day.toLocaleDateString([], { weekday: "short" })}
-              </span>
+              <span className="text-xs text-zinc-500">{formatManilaWeekday(day)}</span>
             </div>
           ))}
         </div>

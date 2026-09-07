@@ -96,14 +96,14 @@ export default function ConfirmationStatus({
       );
     }
 
-    if (orderStatus === "CANCELLED") {
+    if (orderStatus === "CANCELLED" || orderStatus === "REFUNDED") {
       return (
         <>
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-3xl text-red-600">
             ✕
           </div>
           <h1 className="mt-6 font-[family-name:var(--font-heading)] text-2xl font-bold text-zinc-900">
-            Order cancelled
+            {orderStatus === "REFUNDED" ? "Order refunded" : "Order cancelled"}
           </h1>
         </>
       );
@@ -141,6 +141,20 @@ export default function ConfirmationStatus({
         </p>
         <p className="mt-1 text-2xl font-bold text-red-600">₱{total.toFixed(2)}</p>
         {trackOrderButton}
+      </>
+    );
+  }
+
+  if (paymentStatus === "REFUNDED") {
+    return (
+      <>
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-3xl text-red-600">
+          ✕
+        </div>
+        <h1 className="mt-6 font-[family-name:var(--font-heading)] text-2xl font-bold text-zinc-900">
+          Order refunded
+        </h1>
+        <p className="mt-2 text-sm text-zinc-600">This order was refunded and is treated as cancelled.</p>
       </>
     );
   }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "../../../lib/prisma.js";
 import { getManilaDayRange } from "../../../lib/timezone.js";
+import { EXCLUDE_ABANDONED_EXPIRED_ORDERS_WHERE } from "../../../lib/orderStatus.js";
 
 // Groups the raw OrderStatus enum into the handful of buckets staff actually
 // care about at a glance — READY_FOR_PICKUP and OUT_FOR_DELIVERY both mean
@@ -11,7 +12,7 @@ const BREAKDOWN_BUCKETS = [
   { label: "Preparing", statuses: ["PREPARING"] },
   { label: "Waiting for Rider / Pickup", statuses: ["READY_FOR_PICKUP", "OUT_FOR_DELIVERY"] },
   { label: "Completed", statuses: ["DELIVERED"] },
-  { label: "Cancelled", statuses: ["CANCELLED"] },
+  { label: "Cancelled", statuses: ["CANCELLED", "REFUNDED"] },
 ];
 
 export default async function StaffDashboardPage() {
@@ -22,7 +23,7 @@ export default async function StaffDashboardPage() {
 
   const todaysOrders = await prisma.order.groupBy({
     by: ["status"],
-    where: { createdAt: { gte: start, lt: end } },
+    where: { createdAt: { gte: start, lt: end }, ...EXCLUDE_ABANDONED_EXPIRED_ORDERS_WHERE },
     _count: { _all: true },
   });
 

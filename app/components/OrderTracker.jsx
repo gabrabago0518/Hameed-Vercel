@@ -1,4 +1,5 @@
 import { Check } from "lucide-react";
+import { formatManilaTime } from "../../lib/timezone.js";
 
 // Horizontal progress stepper for the customer order page. `stages` comes
 // from lib/orderStatus.js's buildOrderTracker() — each one already carries
@@ -35,7 +36,7 @@ export default function OrderTracker({ stages }) {
             {stage.timestamp && (
               <p className="mt-0.5 text-[11px] text-zinc-400">
                 {stage.current ? "since " : ""}
-                {stage.timestamp.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                {formatManilaTime(stage.timestamp)}
               </p>
             )}
           </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import FormSpinner from "../components/FormSpinner.jsx";
 
 export default function FulfillmentSelector({ branches, addresses, fulfillment, action }) {
   const defaultAddress = addresses.find((a) => a.isDefault) ?? addresses[0] ?? null;
@@ -26,6 +27,7 @@ export default function FulfillmentSelector({ branches, addresses, fulfillment, 
 
   return (
     <form action={action} className="mt-4 flex flex-col gap-4">
+      <FormSpinner />
       <label className="flex items-center gap-2 text-sm font-medium text-zinc-900">
         <input
           type="radio"

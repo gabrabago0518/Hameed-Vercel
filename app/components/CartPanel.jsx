@@ -4,6 +4,7 @@ import Link from "next/link";
 import { X } from "lucide-react";
 import { removeFromCartAction, updateCartQuantityAction } from "../cart/actions.js";
 import { useCartUI } from "./CartUIContext.jsx";
+import FormSpinner from "./FormSpinner.jsx";
 
 // Formerly FloatingCart — the bottom-right floating trigger button is gone
 // now that the header's cart button is the only way to open this (by
@@ -21,7 +22,7 @@ export default function CartPanel({ items, total }) {
     // top-20 matches the header's own height (py-4 padding + its h-12 logo
     // = 5rem/80px) so this panel starts right below it instead of covering
     // it - update this if the header's height ever changes again.
-    <div className="fixed top-20 right-0 bottom-0 z-40 flex w-full max-w-sm flex-col bg-white p-6 shadow-xl font-[family-name:var(--font-heading)]">
+    <div className="fixed top-20 right-0 bottom-0 z-40 flex w-full max-w-sm flex-col border-l border-zinc-200 bg-white p-6 shadow-xl font-[family-name:var(--font-heading)]">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-zinc-900">
           Your cart
@@ -58,6 +59,7 @@ export default function CartPanel({ items, total }) {
 
                 <div className="flex items-center gap-2">
                   <form action={updateCartQuantityAction}>
+                    <FormSpinner />
                     <input type="hidden" name="lineId" value={item.lineId} />
                     <input type="hidden" name="quantity" value={item.quantity - 1} />
                     <button
@@ -73,6 +75,7 @@ export default function CartPanel({ items, total }) {
                   </span>
 
                   <form action={updateCartQuantityAction}>
+                    <FormSpinner />
                     <input type="hidden" name="lineId" value={item.lineId} />
                     <input type="hidden" name="quantity" value={item.quantity + 1} />
                     <button
@@ -88,6 +91,7 @@ export default function CartPanel({ items, total }) {
                   </span>
 
                   <form action={removeFromCartAction}>
+                    <FormSpinner />
                     <input type="hidden" name="lineId" value={item.lineId} />
                     <button
                       type="submit"

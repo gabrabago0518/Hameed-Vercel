@@ -4,9 +4,12 @@ import { getCurrentUser } from "../../../lib/session.js";
 import { getCartDetails } from "../../../lib/cart.js";
 import { getFulfillment } from "../../../lib/fulfillment.js";
 import { getDeliveryFee } from "../../../lib/deliveryZones.js";
+import { validatePromoCode } from "../../../lib/promoCode.js";
+import { getAppliedPromoCode } from "../../../lib/promoCookie.js";
 import { prisma } from "../../../lib/prisma.js";
 import { placeOrderAction } from "../actions.js";
 import PaymentMethodSelector from "../PaymentMethodSelector.jsx";
+import PromoCodeForm from "../PromoCodeForm.jsx";
 
 const ERROR_MESSAGES = {
   no_payment_method: "Please choose a payment method.",
@@ -44,7 +47,16 @@ export default async function CheckoutPaymentPage({ searchParams }) {
   // Mirrors placeOrderAction's own calculation exactly, so what's shown here
   // is always what actually gets charged — see lib/deliveryZones.js.
   const deliveryFee = selectedAddress ? getDeliveryFee(selectedAddress.city) : 0;
-  const orderTotal = total + deliveryFee;
+
+  // Re-validated on every render, same as placeOrderAction does again at
+  // order-placement time — a code that expired or hit its use limit since it
+  // was applied just silently stops discounting rather than blocking the page.
+  const appliedCode = await getAppliedPromoCode();
+  const promoResult = appliedCode ? await validatePromoCode(appliedCode, total) : null;
+  const discountAmount = promoResult?.valid ? promoResult.discountAmount : 0;
+  const appliedCodeInvalid = Boolean(appliedCode) && !promoResult?.valid;
+
+  const orderTotal = total + deliveryFee - discountAmount;
 
   return (
     <main className="mx-auto w-full max-w-lg flex-1 px-4 py-10 sm:px-6 sm:py-12">
@@ -94,6 +106,12 @@ export default async function CheckoutPaymentPage({ searchParams }) {
               <span>₱{deliveryFee.toFixed(2)}</span>
             </div>
           )}
+          {discountAmount > 0 && (
+            <div className="flex justify-between text-emerald-700">
+              <span>Discount{appliedCode ? ` (${appliedCode})` : ""}</span>
+              <span>-₱{discountAmount.toFixed(2)}</span>
+            </div>
+          )}
           <div className="mt-1 flex justify-between border-t border-zinc-100 pt-2 font-semibold text-zinc-900">
             <span>Total</span>
             <span className="text-red-600">₱{orderTotal.toFixed(2)}</span>
@@ -104,6 +122,9 @@ export default async function CheckoutPaymentPage({ searchParams }) {
             ? `Delivery from ${selectedBranch?.name ?? "selected branch"}`
             : `Pickup at ${selectedBranch?.name ?? "selected branch"}`}
         </p>
+        <div className="border-t border-zinc-100 pt-3">
+          <PromoCodeForm appliedCode={appliedCode} appliedCodeInvalid={appliedCodeInvalid} />
+        </div>
       </section>
 
       <section className="mt-6 rounded-2xl border border-zinc-200 bg-white p-5">
