@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { prisma } from "../../../lib/prisma.js";
+import { getManilaDaysAgoStart } from "../../../lib/timezone.js";
 
+// "N days ago" anchored to Manila midnight, not the server's own timezone
+// (UTC on Vercel) — see lib/timezone.js. The old `new Date();
+// setHours(0,0,0,0)` version reset "today" at 8am Manila time instead of
+// real midnight, which made every range on this page (Today/7 days/30 days)
+// off by 8 hours.
 function daysAgo(n) {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - n);
-  return d;
+  return getManilaDaysAgoStart(n);
 }
 
 // Queries Order (not just Payment) so the delivery-fee portion of each sale

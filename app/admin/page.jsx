@@ -1,13 +1,11 @@
 import { prisma } from "../../lib/prisma.js";
-
-function startOfDay(date) {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
+import { getManilaDayRange, getManilaDaysAgoStart, formatManilaWeekday } from "../../lib/timezone.js";
 
 async function getTodayStats() {
-  const start = startOfDay(new Date());
+  // "Today" in Asia/Manila, not the server's own timezone (UTC on Vercel) —
+  // see lib/timezone.js. Previously this used `new Date(); setHours(0,0,0,0)`,
+  // which reset at UTC midnight (8am Manila time) instead of real midnight.
+  const { start } = getManilaDayRange();
 
   const [salesToday, ordersToday, pending, preparing, delivered] = await Promise.all([
     prisma.payment.aggregate({
@@ -37,15 +35,12 @@ async function getTodayStats() {
 async function getSevenDaySales() {
   const days = [];
   for (let i = 6; i >= 0; i--) {
-    const day = startOfDay(new Date());
-    day.setDate(day.getDate() - i);
-    days.push(day);
+    days.push(getManilaDaysAgoStart(i));
   }
 
   const results = await Promise.all(
     days.map(async (day) => {
-      const nextDay = new Date(day);
-      nextDay.setDate(nextDay.getDate() + 1);
+      const nextDay = new Date(day.getTime() + 24 * 60 * 60 * 1000);
       const sum = await prisma.payment.aggregate({
         where: { status: "PAID", paidAt: { gte: day, lt: nextDay } },
         _sum: { amount: true },
@@ -97,9 +92,7 @@ export default async function AdminOverviewPage() {
                 style={{ height: `${Math.max(4, (total / maxDay) * 100)}%` }}
                 title={`₱${total.toFixed(2)}`}
               />
-              <span className="text-xs text-zinc-500">
-                {day.toLocaleDateString([], { weekday: "short" })}
-              </span>
+              <span className="text-xs text-zinc-500">{formatManilaWeekday(day)}</span>
             </div>
           ))}
         </div>

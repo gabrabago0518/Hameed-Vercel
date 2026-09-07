@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "../../../../lib/prisma.js";
 import { STATUS_LABELS, PAYMENT_METHOD_LABELS, isPaymentWindowExpired } from "../../../../lib/orderStatus.js";
+import { formatManilaDateTime } from "../../../../lib/timezone.js";
 import { getOrderItemLineTotal, getOrderItemChoiceLabels } from "../../../../lib/orderItemDisplay.js";
 import {
   verifyCodOrderAction,
@@ -180,7 +181,7 @@ export default async function AdminOrderDetailPage({ params, searchParams }) {
             </form>
             <span className="text-xs text-zinc-500">
               {order.delivery?.pickedUpAt
-                ? `Picked up at ${order.delivery.pickedUpAt.toLocaleString()}`
+                ? `Picked up at ${formatManilaDateTime(order.delivery.pickedUpAt)}`
                 : "Not picked up yet"}
             </span>
           </div>
@@ -197,7 +198,7 @@ export default async function AdminOrderDetailPage({ params, searchParams }) {
             </form>
             <span className="text-xs text-zinc-500">
               {order.delivery?.deliveredAt
-                ? `Delivered at ${order.delivery.deliveredAt.toLocaleString()}`
+                ? `Delivered at ${formatManilaDateTime(order.delivery.deliveredAt)}`
                 : "Not delivered yet"}
             </span>
           </div>
@@ -258,17 +259,17 @@ export default async function AdminOrderDetailPage({ params, searchParams }) {
               <p>Exchange for: ₱{Number(order.payment.codExchangeFor).toFixed(2)}</p>
             )}
             {order.payment.paidAt && (
-              <p>Paid at: {order.payment.paidAt.toLocaleString()}</p>
+              <p>Paid at: {formatManilaDateTime(order.payment.paidAt)}</p>
             )}
             {order.payment.codVerifiedAt && (
               <p>
                 Verified by {order.payment.codVerifiedBy?.name ?? "—"} at{" "}
-                {order.payment.codVerifiedAt.toLocaleString()}
+                {formatManilaDateTime(order.payment.codVerifiedAt)}
               </p>
             )}
             {order.payment.refundedAt && (
               <p>
-                Refunded at {order.payment.refundedAt.toLocaleString()}
+                Refunded at {formatManilaDateTime(order.payment.refundedAt)}
                 {order.payment.paymongoRefundId
                   ? ` (via PayMongo, ${order.payment.paymongoRefundId})`
                   : " (recorded manually — no PayMongo transaction to refund)"}
@@ -359,7 +360,7 @@ export default async function AdminOrderDetailPage({ params, searchParams }) {
                 {entry.note ? ` — ${entry.note}` : ""}
                 {entry.changedBy ? ` (by ${entry.changedBy.name})` : ""}
               </span>
-              <span className="text-zinc-400">{entry.createdAt.toLocaleString()}</span>
+              <span className="text-zinc-400">{formatManilaDateTime(entry.createdAt)}</span>
             </div>
           ))}
         </div>

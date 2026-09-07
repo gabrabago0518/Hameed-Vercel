@@ -9,6 +9,7 @@ const NAV_LINKS = [
   { href: "/admin/riders", label: "Riders" },
   { href: "/admin/promo-codes", label: "Promo codes" },
   { href: "/admin/sales", label: "Sales" },
+  { href: "/admin/staff-performance", label: "Staff performance" },
 ];
 
 export default async function AdminLayout({ children }) {

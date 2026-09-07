@@ -5,6 +5,7 @@ import {
   PAYMENT_METHOD_LABELS,
   getNextStatusButtonLabel,
 } from "../../../lib/orderStatus.js";
+import { formatManilaDate, formatManilaTime } from "../../../lib/timezone.js";
 import { advanceOrderStatusAction, verifyCodOrderAction } from "../actions.js";
 import StaffOrdersPoller from "../StaffOrdersPoller.jsx";
 import RefreshButton from "../RefreshButton.jsx";
@@ -162,8 +163,7 @@ export default async function StaffOrdersPage({ searchParams }) {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-zinc-500">
-                      {order.createdAt.toLocaleDateString()}{" "}
-                      {order.createdAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                      {formatManilaDate(order.createdAt)} {formatManilaTime(order.createdAt)}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-2">

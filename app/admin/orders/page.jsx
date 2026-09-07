@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "../../../lib/prisma.js";
 import { STATUS_LABELS, isPaymentWindowExpired } from "../../../lib/orderStatus.js";
+import { formatManilaDate, formatManilaTime } from "../../../lib/timezone.js";
 import { verifyCodOrderAction } from "./actions.js";
 
 const STATUS_OPTIONS = Object.keys(STATUS_LABELS);
@@ -142,8 +143,7 @@ export default async function AdminOrdersPage({ searchParams }) {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-zinc-500">
-                    {order.createdAt.toLocaleDateString()}{" "}
-                    {order.createdAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                    {formatManilaDate(order.createdAt)} {formatManilaTime(order.createdAt)}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-col gap-2">
