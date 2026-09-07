@@ -15,16 +15,19 @@ import { getOrderItemChoiceLabels } from "../../../lib/orderItemDisplay.js";
 
 // The four filter tabs the staff asked for, plus "All" as the default —
 // grouped from the real OrderStatus enum values (see lib/orderStatus.js).
-// CONFIRMED sits in "Pending" because it's the brief in-between state after
-// a payment/COD verification and before a staff member clicks "Mark
-// preparing" — it still needs someone to act on it, same as
-// PENDING_CONFIRMATION. Plain PENDING (a QR/GCash order still mid-payment,
-// or abandoned) is deliberately left out — by request, since a customer who
-// never finishes paying would otherwise clutter this tab with orders staff
-// can't do anything about yet, and might never need to.
+// "Pending" means exactly one thing: PENDING_CONFIRMATION, a Cash on
+// Delivery order still awaiting a confirmation call. Nothing else ever
+// belongs here by design — a paid QR/GCash order skips CONFIRMED entirely
+// and lands straight on PREPARING (see lib/orderPayment.js's markOrderPaid),
+// same for a COD order once verifyCodPayment confirms it, so CONFIRMED never
+// persists as a real, visible state in the normal flow. Plain PENDING (a
+// QR/GCash order still mid-payment, or abandoned) is deliberately left out
+// too — by request, since a customer who never finishes paying would
+// otherwise clutter this tab with orders staff can't do anything about yet,
+// and might never need to.
 const FILTER_TABS = [
   { key: "all", label: "All", statuses: null },
-  { key: "pending", label: "Pending", statuses: ["PENDING_CONFIRMATION", "CONFIRMED"] },
+  { key: "pending", label: "Pending", statuses: ["PENDING_CONFIRMATION"] },
   { key: "preparing", label: "Preparing", statuses: ["PREPARING"] },
   { key: "out_for_delivery", label: "Out for Delivery", statuses: ["READY_FOR_PICKUP", "OUT_FOR_DELIVERY"] },
   { key: "completed", label: "Completed", statuses: ["DELIVERED"] },

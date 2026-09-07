@@ -250,9 +250,16 @@ enum OrderStatus {
   PENDING
   // Cash-on-delivery orders only — the manual equivalent of PENDING for a
   // QR/GCash order, except there's no PayMongo intent to poll or webhook to
-  // wait for. Staff calling the customer and hitting "Verify" is what moves
-  // this to CONFIRMED, the same status a successful PayMongo payment reaches.
+  // wait for. Staff calling the customer and hitting "Verify" moves this
+  // straight to PREPARING (through a same-instant CONFIRMED history row for
+  // the audit trail/customer tracker — see lib/orderPayment.js's
+  // verifyCodPayment) rather than parking here as CONFIRMED, by request —
+  // same skip-CONFIRMED behavior a successful PayMongo payment gets via
+  // markOrderPaid.
   PENDING_CONFIRMATION
+  // Reached only via this same-instant history row (see PENDING_CONFIRMATION
+  // above and markOrderPaid) or a manual admin override — never a real,
+  // lasting Order.status in the normal flow.
   CONFIRMED
   PREPARING
   READY_FOR_PICKUP
