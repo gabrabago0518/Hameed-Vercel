@@ -6,6 +6,7 @@ import { prisma } from "../../lib/prisma.js";
 import { issueVerificationEmail } from "../../lib/emailVerification.js";
 import { checkSignupRateLimit } from "../../lib/signupThrottle.js";
 import { getClientIp } from "../../lib/clientIp.js";
+import { isValidName, isValidPhilippineMobile } from "../../lib/signupValidation.js";
 
 export async function signupAction(prevState, formData) {
   const ip = await getClientIp();
@@ -29,6 +30,15 @@ export async function signupAction(prevState, formData) {
 
   if (!firstName || !lastName || !email || !phone || !password) {
     return { error: "Please fill in all fields." };
+  }
+  // By request: reject an obviously fake name or phone number rather than
+  // just checking they're non-empty — see lib/signupValidation.js for
+  // exactly what "obviously fake" means here (and what it can't catch).
+  if (!isValidName(firstName) || !isValidName(lastName)) {
+    return { error: "Please enter your real first and last name." };
+  }
+  if (!isValidPhilippineMobile(phoneDigits)) {
+    return { error: "Please enter a valid Philippine mobile number (e.g. 9171234567)." };
   }
   if (password.length < 8) {
     return { error: "Password must be at least 8 characters." };
