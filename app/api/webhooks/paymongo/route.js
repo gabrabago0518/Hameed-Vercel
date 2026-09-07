@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { verifyWebhookSignature } from "../../../../lib/paymongo.js";
-import { markOrderPaid, markOrderPaymentFailed } from "../../../../lib/orderPayment.js";
+import {
+  markOrderPaid,
+  markOrderPaymentFailed,
+  markOrderPaymentRefunded,
+} from "../../../../lib/orderPayment.js";
 import { sendAdminAlertEmail } from "../../../../lib/mailer.js";
 import { prisma } from "../../../../lib/prisma.js";
 
@@ -113,13 +117,21 @@ export async function POST(request) {
         console.error("Failed to send amount-mismatch alert email:", alertError.message);
       }
     } else {
-      await markOrderPaid(payment.orderId);
+      // resource.id here is the actual Payment resource (`pay_...`), not the
+      // Payment Intent id — this is what a later refund needs (see
+      // Payment.paymongoPaymentId in schema.prisma).
+      await markOrderPaid(payment.orderId, resource.id ?? null);
     }
   } else if (eventType === "payment.failed") {
     await markOrderPaymentFailed(payment.orderId, "Payment failed");
+  } else if (eventType === "payment.refunded") {
+    // Reconciliation only — refundOrderPayment (admin-triggered) is the only
+    // thing that ever calls PayMongo's refund API. This just confirms it
+    // asynchronously and is a no-op if already marked REFUNDED.
+    await markOrderPaymentRefunded(payment.orderId, resource.id ?? null);
   }
-  // Other event types (e.g. payment.refunded) aren't handled yet — extend
-  // this if/else chain when that's needed.
+  // Other event types aren't handled yet — extend this if/else chain when
+  // that's needed.
 
   await prisma.webhookEvent.create({
     data: { provider: "paymongo", providerEventId: eventId, type: eventType },

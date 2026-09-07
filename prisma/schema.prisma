@@ -32,8 +32,15 @@ model User {
   // before email verification existed) aren't retroactively locked out —
   // new signups explicitly pass isVerified: false to override this.
   isVerified   Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  // Login rate limiting — incremented on each wrong password, reset to 0 on
+  // a successful login. lockedUntil is only ever set once the count crosses
+  // the threshold (see lib/loginThrottle.js); a login attempt while locked
+  // is rejected without even checking the password, so a lockout can't be
+  // used to keep guessing.
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   addresses               Address[]
   orders                  Order[]
@@ -77,6 +84,20 @@ model PasswordResetToken {
   user User @relation(fields: [userId], references: [id])
 
   @@map("password_reset_tokens")
+}
+
+// Signup has no existing user row to attach a failed-attempt counter to
+// (unlike login), so it's rate-limited by client IP instead — one row per
+// attempt, counted over a sliding window (see lib/signupThrottle.js). Rows
+// aren't pruned; at this project's scale that's a non-issue, and a real
+// cleanup sweep can be added later if it ever becomes one.
+model SignupAttempt {
+  id        String   @id @default(cuid())
+  ip        String
+  createdAt DateTime @default(now())
+
+  @@index([ip, createdAt])
+  @@map("signup_attempts")
 }
 
 model Address {
@@ -249,6 +270,13 @@ model Order {
   status      OrderStatus @default(PENDING)
   subtotal    Decimal     @db.Decimal(10, 2)
   deliveryFee Decimal     @db.Decimal(10, 2)
+  // Subtracted from subtotal+deliveryFee to reach total — 0 for the vast
+  // majority of orders (no code applied). Kept as a plain amount rather than
+  // re-deriving it from the promo code's rule at read time, same reasoning
+  // as unitPrice snapshots on OrderItem: a later change to the code (or the
+  // code being deleted) must never change what a past order shows it paid.
+  discountAmount Decimal  @default(0) @db.Decimal(10, 2)
+  promoCodeId    String?
   total       Decimal     @db.Decimal(10, 2)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
@@ -256,6 +284,7 @@ model Order {
   user          User                 @relation(fields: [userId], references: [id])
   branch        Branch               @relation(fields: [branchId], references: [id])
   address       Address?             @relation(fields: [addressId], references: [id])
+  promoCode     PromoCode?           @relation(fields: [promoCodeId], references: [id])
   items         OrderItem[]
   statusHistory OrderStatusHistory[]
   payment       Payment?
@@ -334,6 +363,36 @@ model OrderStatusHistory {
   @@map("order_status_history")
 }
 
+// ---------- Promotions ----------
+
+enum DiscountType {
+  PERCENT
+  FIXED
+}
+
+model PromoCode {
+  id     String       @id @default(cuid())
+  // Stored and matched uppercase (see lib/promoCode.js) so "welcome10" and
+  // "WELCOME10" are the same code from a customer's point of view.
+  code   String       @unique
+  type   DiscountType
+  // PERCENT: a whole number 1-100 (10 = 10% off). FIXED: a peso amount.
+  // Same Decimal column either way — which one it means depends on `type`.
+  value  Decimal      @db.Decimal(10, 2)
+  isActive  Boolean   @default(true)
+  expiresAt DateTime?
+  // Null = unlimited. Checked against usedCount, not a live count of orders
+  // referencing this code, so a deleted/refunded order never frees up a slot
+  // that was already handed out.
+  maxUses   Int?
+  usedCount Int       @default(0)
+  createdAt DateTime  @default(now())
+
+  orders Order[]
+
+  @@map("promo_codes")
+}
+
 // ---------- Payments ----------
 
 enum PaymentMethod {
@@ -364,6 +423,14 @@ model Payment {
   // The Payment Intent id (`pi_...`) — this is the key a webhook event uses
   // to tell us which payment it's about, so it must be unique and indexed.
   paymongoPaymentIntentId String? @unique
+  // The actual Payment resource id (`pay_...`) once the intent succeeds —
+  // distinct from the Payment Intent id above, and the id PayMongo's refund
+  // API actually wants (you refund a completed payment, not the intent that
+  // led to it). Only ever set once payment.paid fires (from the webhook's
+  // event payload) or a poll/sweep reconciliation observes it (from the
+  // succeeded intent's own `payments` array) — never set for a still-PENDING
+  // payment, since it doesn't exist yet.
+  paymongoPaymentId       String? @unique
   // GCash/Maya use a redirect flow: PayMongo hands us a URL, we send the
   // customer there, they authenticate in-app, then get redirected back.
   paymongoCheckoutUrl     String?
@@ -388,6 +455,16 @@ model Payment {
 
   paidAt    DateTime?
   createdAt DateTime  @default(now())
+
+  // --- Refund fields ---
+  // Set once an admin triggers a refund (app/admin/orders/actions.js's
+  // refundOrderAction). paymongoRefundId is only set for QR/GCash payments
+  // actually refunded through PayMongo's API — a refunded Cash on Delivery
+  // payment has no PayMongo transaction to refund at all (the cash was
+  // simply never collected, or handed back in person), so it's marked
+  // REFUNDED with refundedAt set but paymongoRefundId left null.
+  refundedAt       DateTime?
+  paymongoRefundId String?
 
   order Order @relation(fields: [orderId], references: [id])
 

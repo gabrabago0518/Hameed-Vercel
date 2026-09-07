@@ -4,6 +4,12 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { prisma } from "../../lib/prisma.js";
 import { createSession } from "../../lib/session.js";
+import {
+  getActiveLock,
+  recordFailedLogin,
+  resetLoginAttempts,
+  formatLockMessage,
+} from "../../lib/loginThrottle.js";
 
 export async function loginAction(prevState, formData) {
   const email = formData.get("email")?.toString().trim().toLowerCase();
@@ -14,14 +20,34 @@ export async function loginAction(prevState, formData) {
   }
 
   const user = await prisma.user.findUnique({ where: { email } });
+
+  // Checked before even touching the password — a locked account should
+  // reject every attempt uniformly while locked, not just the ones that
+  // happen to guess wrong again.
+  const activeLock = getActiveLock(user);
+  if (activeLock) {
+    return { error: formatLockMessage(activeLock) };
+  }
+
   // Always run bcrypt.compare, even for a nonexistent user, so a wrong email
   // and a wrong password both take the same amount of time to reject.
   const dummyHash = "$2b$10$CwTycUXWue0Thq9StjUM0uJ8i8mNjNyOTsMSvKywDlhX3iBmc/PGm";
   const passwordMatches = await bcrypt.compare(password, user?.passwordHash ?? dummyHash);
 
   if (!user || !passwordMatches) {
+    // Only a real account's counter can increment — a wrong email for a
+    // nonexistent account has nothing to lock, and counting it would let
+    // someone lock out an account they don't even know exists yet.
+    if (user) {
+      const { lockedUntil } = await recordFailedLogin(user.id);
+      if (lockedUntil) {
+        return { error: formatLockMessage(lockedUntil) };
+      }
+    }
     return { error: "Incorrect email or password." };
   }
+
+  await resetLoginAttempts(user.id);
 
   // Checked only after the password is confirmed correct — this way a wrong
   // password never reveals whether an account exists and is unverified, but
