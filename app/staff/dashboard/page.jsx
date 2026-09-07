@@ -11,7 +11,7 @@ const BREAKDOWN_BUCKETS = [
   { label: "Preparing", statuses: ["PREPARING"] },
   { label: "Waiting for Rider / Pickup", statuses: ["READY_FOR_PICKUP", "OUT_FOR_DELIVERY"] },
   { label: "Completed", statuses: ["DELIVERED"] },
-  { label: "Cancelled", statuses: ["CANCELLED"] },
+  { label: "Cancelled", statuses: ["CANCELLED", "REFUNDED"] },
 ];
 
 export default async function StaffDashboardPage() {

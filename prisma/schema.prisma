@@ -259,6 +259,14 @@ enum OrderStatus {
   OUT_FOR_DELIVERY
   DELIVERED
   CANCELLED
+  // Set alongside Payment.status flipping to REFUNDED (see
+  // lib/orderPayment.js's refundOrderPayment/markOrderPaymentRefunded) — a
+  // refunded order is treated the same as CANCELLED everywhere that matters
+  // (excluded from staff's active queues, terminal for the customer tracker
+  // and status poller, kept out of the "always allowed directly" transition
+  // set the same way CANCELLED is), just with its own honest label so a
+  // customer sees "Refunded" rather than a plain "Cancelled."
+  REFUNDED
 }
 
 model Order {

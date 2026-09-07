@@ -295,7 +295,8 @@ export default async function AdminOrderDetailPage({ params, searchParams }) {
                 {order.payment.paymongoPaymentId
                   ? " via PayMongo"
                   : " — no PayMongo transaction on file, so this only records the refund; the money itself has to move some other way"}
-                . This doesn&apos;t change the order&apos;s fulfillment status.
+                . This also moves the order to Refunded, treated the same as a
+                cancelled order.
               </span>
             </label>
             <button

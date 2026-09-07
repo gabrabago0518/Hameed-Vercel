@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 const POLL_INTERVAL_MS = 4000;
-const TERMINAL_ORDER_STATUSES = ["DELIVERED", "CANCELLED"];
+const TERMINAL_ORDER_STATUSES = ["DELIVERED", "CANCELLED", "REFUNDED"];
 
 // Renders nothing. Formerly OrderPaymentStatusPoller — broadened to also
 // watch fulfillment status (Preparing/Out for delivery/Delivered, set by

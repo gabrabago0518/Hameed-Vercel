@@ -134,7 +134,7 @@ export async function markDeliveredAction(formData) {
 // checkbox, same reasoning as setOrderStatusAction's override — a refund
 // isn't something to fire off from a misclick.
 export async function refundOrderAction(formData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const orderId = formData.get("orderId")?.toString();
   const confirmed = formData.get("confirmRefund") === "on";
@@ -144,7 +144,7 @@ export async function refundOrderAction(formData) {
     redirect(`/admin/orders/${orderId}?refundError=confirm_required`);
   }
 
-  const result = await refundOrderPayment(orderId);
+  const result = await refundOrderPayment(orderId, admin.id);
 
   if (!result.changed) {
     const error = result.reason === "paymongo_error" ? "paymongo_failed" : "not_refundable";

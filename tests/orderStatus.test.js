@@ -3,6 +3,7 @@ import {
   isPaymentWindowExpired,
   getNextOrderStatus,
   isRegularTransition,
+  buildOrderTracker,
 } from "../lib/orderStatus.js";
 
 describe("isPaymentWindowExpired", () => {
@@ -68,6 +69,7 @@ describe("getNextOrderStatus", () => {
   it("returns null once there is no next step", () => {
     expect(getNextOrderStatus({ status: "DELIVERED", addressId: null })).toBeNull();
     expect(getNextOrderStatus({ status: "CANCELLED", addressId: null })).toBeNull();
+    expect(getNextOrderStatus({ status: "REFUNDED", addressId: null })).toBeNull();
   });
 });
 
@@ -96,5 +98,21 @@ describe("isRegularTransition", () => {
     expect(isRegularTransition({ status: "PREPARING", addressId: null }, "CONFIRMED")).toBe(
       false
     );
+  });
+
+  it("always allows refunding, same as cancelling", () => {
+    expect(isRegularTransition({ status: "PREPARING", addressId: null }, "REFUNDED")).toBe(true);
+  });
+});
+
+describe("buildOrderTracker", () => {
+  it("treats a refunded order the same as a cancelled one — no tracker to show", () => {
+    expect(buildOrderTracker({ status: "REFUNDED", addressId: null, statusHistory: [] })).toBeNull();
+    expect(buildOrderTracker({ status: "CANCELLED", addressId: null, statusHistory: [] })).toBeNull();
+  });
+
+  it("still builds a tracker for an active order", () => {
+    const order = { status: "PREPARING", addressId: null, statusHistory: [] };
+    expect(buildOrderTracker(order)).not.toBeNull();
   });
 });
