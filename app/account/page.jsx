@@ -3,7 +3,7 @@ import { getCurrentUser } from "../../lib/session.js";
 import { logoutAction } from "../logout/actions.js";
 import { savePhoneAction } from "./actions.js";
 import { prisma } from "../../lib/prisma.js";
-import { STATUS_LABELS } from "../../lib/orderStatus.js";
+import { STATUS_LABELS, EXCLUDE_ABANDONED_EXPIRED_ORDERS_WHERE } from "../../lib/orderStatus.js";
 import { formatManilaDate, formatManilaTime } from "../../lib/timezone.js";
 import PhoneField from "../components/PhoneField.jsx";
 
@@ -31,7 +31,7 @@ export default async function AccountPage() {
     prisma.address.findFirst({ where: { userId: user.id, isDefault: true } }),
     prisma.address.count({ where: { userId: user.id } }),
     prisma.order.findMany({
-      where: { userId: user.id },
+      where: { userId: user.id, ...EXCLUDE_ABANDONED_EXPIRED_ORDERS_WHERE },
       orderBy: { createdAt: "desc" },
       take: 5,
       include: { items: { include: { menuItem: true } } },

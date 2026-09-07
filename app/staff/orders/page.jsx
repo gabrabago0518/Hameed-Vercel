@@ -4,9 +4,10 @@ import {
   STATUS_LABELS,
   PAYMENT_METHOD_LABELS,
   getNextStatusButtonLabel,
+  EXCLUDE_ABANDONED_EXPIRED_ORDERS_WHERE,
 } from "../../../lib/orderStatus.js";
 import { formatManilaDate, formatManilaTime } from "../../../lib/timezone.js";
-import { advanceOrderStatusAction, verifyCodOrderAction } from "../actions.js";
+import { advanceOrderStatusAction, verifyCodOrderAction, markUnreachableAction } from "../actions.js";
 import StaffOrdersPoller from "../StaffOrdersPoller.jsx";
 import RefreshButton from "../RefreshButton.jsx";
 import { getOrderItemChoiceLabels } from "../../../lib/orderItemDisplay.js";
@@ -15,11 +16,14 @@ import { getOrderItemChoiceLabels } from "../../../lib/orderItemDisplay.js";
 // grouped from the real OrderStatus enum values (see lib/orderStatus.js).
 // CONFIRMED sits in "Pending" because it's the brief in-between state after
 // a payment/COD verification and before a staff member clicks "Mark
-// preparing" — it still needs someone to act on it, same as PENDING/
-// PENDING_CONFIRMATION.
+// preparing" — it still needs someone to act on it, same as
+// PENDING_CONFIRMATION. Plain PENDING (a QR/GCash order still mid-payment,
+// or abandoned) is deliberately left out — by request, since a customer who
+// never finishes paying would otherwise clutter this tab with orders staff
+// can't do anything about yet, and might never need to.
 const FILTER_TABS = [
   { key: "all", label: "All", statuses: null },
-  { key: "pending", label: "Pending", statuses: ["PENDING", "PENDING_CONFIRMATION", "CONFIRMED"] },
+  { key: "pending", label: "Pending", statuses: ["PENDING_CONFIRMATION", "CONFIRMED"] },
   { key: "preparing", label: "Preparing", statuses: ["PREPARING"] },
   { key: "out_for_delivery", label: "Out for Delivery", statuses: ["READY_FOR_PICKUP", "OUT_FOR_DELIVERY"] },
   { key: "completed", label: "Completed", statuses: ["DELIVERED"] },
@@ -39,7 +43,10 @@ export default async function StaffOrdersPage({ searchParams }) {
 
   const [orders, orderCount, latestChanged] = await Promise.all([
     prisma.order.findMany({
-      where: activeTab.statuses ? { status: { in: activeTab.statuses } } : {},
+      where: {
+        ...(activeTab.statuses ? { status: { in: activeTab.statuses } } : {}),
+        ...EXCLUDE_ABANDONED_EXPIRED_ORDERS_WHERE,
+      },
       orderBy: { createdAt: "desc" },
       take: 100,
       include: {
@@ -126,7 +133,14 @@ export default async function StaffOrdersPage({ searchParams }) {
                     <td className="px-4 py-3 font-medium text-zinc-900">
                       {order.payment?.transactionRef ?? order.id}
                     </td>
-                    <td className="px-4 py-3 text-zinc-700">{order.user.name}</td>
+                    <td className="px-4 py-3 text-zinc-700">
+                      <p>{order.user.name}</p>
+                      {needsCodVerification && (
+                        <p className="mt-0.5 text-xs font-medium text-amber-700">
+                          {order.user.phone ?? "No phone on file"}
+                        </p>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-zinc-700">
                       <ul className="space-y-0.5">
                         {order.items.map((item) => {
@@ -168,15 +182,26 @@ export default async function StaffOrdersPage({ searchParams }) {
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-2">
                         {needsCodVerification && (
-                          <form action={verifyCodOrderAction}>
-                            <input type="hidden" name="orderId" value={order.id} />
-                            <button
-                              type="submit"
-                              className="min-h-11 w-full rounded-full bg-amber-600 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-700"
-                            >
-                              Verify Customer
-                            </button>
-                          </form>
+                          <>
+                            <form action={verifyCodOrderAction}>
+                              <input type="hidden" name="orderId" value={order.id} />
+                              <button
+                                type="submit"
+                                className="min-h-11 w-full rounded-full bg-amber-600 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-700"
+                              >
+                                Verify Customer
+                              </button>
+                            </form>
+                            <form action={markUnreachableAction}>
+                              <input type="hidden" name="orderId" value={order.id} />
+                              <button
+                                type="submit"
+                                className="min-h-11 w-full rounded-full border border-amber-300 px-3 py-2 text-xs font-semibold text-amber-700 hover:bg-amber-50"
+                              >
+                                Unreachable ({order.payment.unreachableAttempts}/3)
+                              </button>
+                            </form>
+                          </>
                         )}
                         {nextLabel && (
                           <form action={advanceOrderStatusAction}>

@@ -4,6 +4,7 @@ import {
   getNextOrderStatus,
   isRegularTransition,
   buildOrderTracker,
+  isAbandonedExpiredOrder,
 } from "../lib/orderStatus.js";
 
 describe("isPaymentWindowExpired", () => {
@@ -114,5 +115,29 @@ describe("buildOrderTracker", () => {
   it("still builds a tracker for an active order", () => {
     const order = { status: "PREPARING", addressId: null, statusHistory: [] };
     expect(buildOrderTracker(order)).not.toBeNull();
+  });
+});
+
+describe("isAbandonedExpiredOrder", () => {
+  it("is true for a cancelled order whose payment expired unpaid", () => {
+    expect(isAbandonedExpiredOrder({ status: "CANCELLED", payment: { status: "EXPIRED" } })).toBe(
+      true
+    );
+  });
+
+  it("is false for a cancelled order that was actually declined", () => {
+    expect(isAbandonedExpiredOrder({ status: "CANCELLED", payment: { status: "FAILED" } })).toBe(
+      false
+    );
+  });
+
+  it("is false for a cancelled order with no payment row at all", () => {
+    expect(isAbandonedExpiredOrder({ status: "CANCELLED", payment: null })).toBe(false);
+  });
+
+  it("is false for an order that isn't cancelled", () => {
+    expect(isAbandonedExpiredOrder({ status: "PENDING", payment: { status: "EXPIRED" } })).toBe(
+      false
+    );
   });
 });

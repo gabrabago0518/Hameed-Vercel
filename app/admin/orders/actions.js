@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "../../../lib/roleGuard.js";
-import { verifyCodPayment, refundOrderPayment } from "../../../lib/orderPayment.js";
+import { verifyCodPayment, refundOrderPayment, markOrderUnreachable } from "../../../lib/orderPayment.js";
 import { prisma } from "../../../lib/prisma.js";
 import { STATUS_LABELS, isRegularTransition } from "../../../lib/orderStatus.js";
 import { notifyOrderStatusChange } from "../../../lib/orderNotifications.js";
@@ -19,6 +19,22 @@ export async function verifyCodOrderAction(formData) {
   if (!orderId) return;
 
   await verifyCodPayment(orderId, admin.id);
+
+  revalidatePath("/admin/orders");
+  revalidatePath(`/admin/orders/${orderId}`);
+  revalidatePath("/staff/dashboard");
+  revalidatePath("/staff/orders");
+}
+
+// Admin-side counterpart to app/staff/actions.js's markUnreachableAction —
+// same requireAdmin() defense-in-depth pattern as verifyCodOrderAction above.
+export async function markUnreachableAction(formData) {
+  const admin = await requireAdmin();
+
+  const orderId = formData.get("orderId")?.toString();
+  if (!orderId) return;
+
+  await markOrderUnreachable(orderId, admin.id);
 
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);

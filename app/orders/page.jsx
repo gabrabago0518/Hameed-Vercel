@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "../../lib/session.js";
 import { prisma } from "../../lib/prisma.js";
-import { STATUS_LABELS } from "../../lib/orderStatus.js";
+import { STATUS_LABELS, EXCLUDE_ABANDONED_EXPIRED_ORDERS_WHERE } from "../../lib/orderStatus.js";
 import { formatManilaDate, formatManilaTime } from "../../lib/timezone.js";
 
 export default async function OrderHistoryPage() {
@@ -12,7 +12,7 @@ export default async function OrderHistoryPage() {
   }
 
   const orders = await prisma.order.findMany({
-    where: { userId: user.id },
+    where: { userId: user.id, ...EXCLUDE_ABANDONED_EXPIRED_ORDERS_WHERE },
     orderBy: { createdAt: "desc" },
     include: { items: { include: { menuItem: true } }, payment: true },
   });

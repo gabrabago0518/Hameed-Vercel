@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireStaff } from "../../lib/roleGuard.js";
 import { prisma } from "../../lib/prisma.js";
 import { getNextOrderStatus } from "../../lib/orderStatus.js";
-import { verifyCodPayment } from "../../lib/orderPayment.js";
+import { verifyCodPayment, markOrderUnreachable } from "../../lib/orderPayment.js";
 import { notifyOrderStatusChange } from "../../lib/orderNotifications.js";
 
 export async function advanceOrderStatusAction(formData) {
@@ -47,6 +47,23 @@ export async function verifyCodOrderAction(formData) {
   if (!orderId) return;
 
   await verifyCodPayment(orderId, staffUser.id);
+
+  revalidatePath("/staff/dashboard");
+  revalidatePath("/staff/orders");
+  revalidatePath(`/orders/${orderId}`);
+}
+
+// The other outcome of a confirmation call — the customer couldn't be
+// reached. Click-for-click counterpart to verifyCodOrderAction above; see
+// markOrderUnreachable (lib/orderPayment.js) for the 3-attempt cap that
+// cancels the order once it's clear nobody's picking up.
+export async function markUnreachableAction(formData) {
+  const staffUser = await requireStaff();
+
+  const orderId = formData.get("orderId")?.toString();
+  if (!orderId) return;
+
+  await markOrderUnreachable(orderId, staffUser.id);
 
   revalidatePath("/staff/dashboard");
   revalidatePath("/staff/orders");

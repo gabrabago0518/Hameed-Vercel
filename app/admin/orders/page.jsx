@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { prisma } from "../../../lib/prisma.js";
-import { STATUS_LABELS, isPaymentWindowExpired } from "../../../lib/orderStatus.js";
+import {
+  STATUS_LABELS,
+  isPaymentWindowExpired,
+  EXCLUDE_ABANDONED_EXPIRED_ORDERS_WHERE,
+} from "../../../lib/orderStatus.js";
 import { formatManilaDate, formatManilaTime } from "../../../lib/timezone.js";
-import { verifyCodOrderAction } from "./actions.js";
+import { verifyCodOrderAction, markUnreachableAction } from "./actions.js";
 
 const STATUS_OPTIONS = Object.keys(STATUS_LABELS);
 const PAGE_SIZE = 25;
@@ -24,6 +28,7 @@ export default async function AdminOrdersPage({ searchParams }) {
   const page = Number.isNaN(requestedPage) || requestedPage < 1 ? 1 : requestedPage;
 
   const where = {
+    ...EXCLUDE_ABANDONED_EXPIRED_ORDERS_WHERE,
     ...(status ? { status } : {}),
     ...(search
       ? {
@@ -124,7 +129,14 @@ export default async function AdminOrdersPage({ searchParams }) {
                       {order.payment?.transactionRef ?? order.id}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-zinc-700">{order.user.name}</td>
+                  <td className="px-4 py-3 text-zinc-700">
+                    <p>{order.user.name}</p>
+                    {needsConfirmation && (
+                      <p className="mt-0.5 text-xs font-medium text-amber-700">
+                        {order.user.phone ?? "No phone on file"}
+                      </p>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-zinc-700">{order.branch.name}</td>
                   <td className="px-4 py-3 font-medium text-zinc-900">
                     ₱{Number(order.total).toFixed(2)}
@@ -148,15 +160,26 @@ export default async function AdminOrdersPage({ searchParams }) {
                   <td className="px-4 py-3">
                     <div className="flex flex-col gap-2">
                       {needsConfirmation && (
-                        <form action={verifyCodOrderAction}>
-                          <input type="hidden" name="orderId" value={order.id} />
-                          <button
-                            type="submit"
-                            className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700"
-                          >
-                            Verify
-                          </button>
-                        </form>
+                        <>
+                          <form action={verifyCodOrderAction}>
+                            <input type="hidden" name="orderId" value={order.id} />
+                            <button
+                              type="submit"
+                              className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700"
+                            >
+                              Verify
+                            </button>
+                          </form>
+                          <form action={markUnreachableAction}>
+                            <input type="hidden" name="orderId" value={order.id} />
+                            <button
+                              type="submit"
+                              className="rounded-lg border border-amber-300 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-50"
+                            >
+                              Unreachable ({order.payment.unreachableAttempts}/3)
+                            </button>
+                          </form>
+                        </>
                       )}
                       <Link
                         href={`/orders/${order.id}/receipt`}

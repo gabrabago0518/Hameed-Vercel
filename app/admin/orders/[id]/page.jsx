@@ -6,6 +6,7 @@ import { formatManilaDateTime } from "../../../../lib/timezone.js";
 import { getOrderItemLineTotal, getOrderItemChoiceLabels } from "../../../../lib/orderItemDisplay.js";
 import {
   verifyCodOrderAction,
+  markUnreachableAction,
   setOrderStatusAction,
   refundOrderAction,
   assignRiderAction,
@@ -97,20 +98,38 @@ export default async function AdminOrderDetailPage({ params, searchParams }) {
       )}
 
       {needsConfirmation && (
-        <div className="mt-4 flex items-center justify-between rounded-2xl border border-amber-200 bg-amber-50 p-4">
-          <p className="text-sm text-amber-800">
-            Cash on Delivery — call the customer to confirm this order before
-            it moves to preparation.
-          </p>
-          <form action={verifyCodOrderAction}>
-            <input type="hidden" name="orderId" value={order.id} />
-            <button
-              type="submit"
-              className="shrink-0 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700"
-            >
-              Verify
-            </button>
-          </form>
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+          <div>
+            <p className="text-sm text-amber-800">
+              Cash on Delivery — call {order.user.phone ?? "the customer (no phone on file)"} to
+              confirm this order before it moves to preparation.
+            </p>
+            {order.payment.unreachableAttempts > 0 && (
+              <p className="mt-1 text-xs text-amber-700">
+                Unreachable so far: {order.payment.unreachableAttempts}/3 attempts.
+              </p>
+            )}
+          </div>
+          <div className="flex shrink-0 flex-col gap-2">
+            <form action={verifyCodOrderAction}>
+              <input type="hidden" name="orderId" value={order.id} />
+              <button
+                type="submit"
+                className="w-full rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700"
+              >
+                Verify
+              </button>
+            </form>
+            <form action={markUnreachableAction}>
+              <input type="hidden" name="orderId" value={order.id} />
+              <button
+                type="submit"
+                className="w-full rounded-lg border border-amber-300 px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-100"
+              >
+                Unreachable
+              </button>
+            </form>
+          </div>
         </div>
       )}
 

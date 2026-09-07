@@ -460,6 +460,12 @@ model Payment {
   // payment step — so whoever delivers/hands off the order knows how much
   // change to bring. Only ever set for CASH_ON_DELIVERY payments.
   codExchangeFor        Decimal?  @db.Decimal(10, 2)
+  // How many times staff has tried calling and couldn't reach the customer —
+  // incremented by lib/orderPayment.js's markOrderUnreachable, capped at 3
+  // (the 3rd attempt cancels the order outright rather than leaving it
+  // stuck awaiting a call nobody can complete). Only meaningful while the
+  // order is still PENDING_CONFIRMATION.
+  unreachableAttempts   Int       @default(0)
 
   paidAt    DateTime?
   createdAt DateTime  @default(now())

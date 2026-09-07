@@ -1,5 +1,6 @@
 import { prisma } from "../../lib/prisma.js";
 import { getManilaDayRange, getManilaDaysAgoStart, formatManilaWeekday } from "../../lib/timezone.js";
+import { EXCLUDE_ABANDONED_EXPIRED_ORDERS_WHERE } from "../../lib/orderStatus.js";
 
 async function getTodayStats() {
   // "Today" in Asia/Manila, not the server's own timezone (UTC on Vercel) —
@@ -12,7 +13,7 @@ async function getTodayStats() {
       where: { status: "PAID", paidAt: { gte: start } },
       _sum: { amount: true },
     }),
-    prisma.order.count({ where: { createdAt: { gte: start } } }),
+    prisma.order.count({ where: { createdAt: { gte: start }, ...EXCLUDE_ABANDONED_EXPIRED_ORDERS_WHERE } }),
     // "Current status as of today" — an order's updatedAt only moves when its
     // status changes, and never changes at all while still PENDING, so this
     // one filter (updatedAt >= start of today) correctly captures "became
