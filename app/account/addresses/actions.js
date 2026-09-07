@@ -6,6 +6,7 @@ import { prisma } from "../../../lib/prisma.js";
 import { getCurrentUser } from "../../../lib/session.js";
 import { isValidCity, isValidBarangay } from "../../../lib/psgc.js";
 import { MAX_ADDRESSES_PER_USER } from "../../../lib/addressConfig.js";
+import { safeRedirectPath } from "../../../lib/safeRedirect.js";
 
 const LABEL_OPTIONS = ["Home", "Office", "Other"];
 
@@ -39,7 +40,7 @@ export async function createAddressAction(formData) {
   // Onboarding and the checkout "Add New Address" flow both post here too —
   // their errors need to bounce back to wherever the form actually is, not
   // always /account/addresses.
-  const errorPage = formData.get("errorRedirectTo")?.toString() || "/account/addresses";
+  const errorPage = safeRedirectPath(formData.get("errorRedirectTo")?.toString(), "/account/addresses");
 
   const existingCount = await prisma.address.count({ where: { userId: user.id } });
   if (existingCount >= MAX_ADDRESSES_PER_USER) {
@@ -70,7 +71,7 @@ export async function createAddressAction(formData) {
   // main app rather than land back on the addresses list — everywhere else
   // just stays on /account/addresses (the default when this isn't set).
   const redirectTo = formData.get("redirectTo")?.toString();
-  if (redirectTo) redirect(redirectTo);
+  if (redirectTo) redirect(safeRedirectPath(redirectTo, "/account/addresses"));
 }
 
 export async function updateAddressAction(formData) {

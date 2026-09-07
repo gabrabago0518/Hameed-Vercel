@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../../lib/prisma.js";
 import { reconcilePendingPayment } from "../../../../lib/orderPayment.js";
+import { timingSafeEqual } from "../../../../lib/timingSafeCompare.js";
 
 // Scheduled sweep (see vercel.json's "crons" entry) for the one case nothing
 // else in this project covers: an order the customer never looks at again
@@ -22,7 +23,8 @@ export async function GET(request) {
     console.error("CRON_SECRET is not set — refusing to run the payment reconciliation sweep.");
     return NextResponse.json({ error: "Server not configured" }, { status: 500 });
   }
-  if (request.headers.get("authorization") !== `Bearer ${secret}`) {
+  const authHeader = request.headers.get("authorization") ?? "";
+  if (!timingSafeEqual(authHeader, `Bearer ${secret}`)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
