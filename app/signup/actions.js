@@ -7,12 +7,22 @@ import { issueVerificationEmail } from "../../lib/emailVerification.js";
 import { checkSignupRateLimit } from "../../lib/signupThrottle.js";
 import { getClientIp } from "../../lib/clientIp.js";
 import { isValidName, isValidPhilippineMobile } from "../../lib/signupValidation.js";
+import { verifyTurnstileToken } from "../../lib/turnstile.js";
 
 export async function signupAction(prevState, formData) {
   const ip = await getClientIp();
   const { limited } = await checkSignupRateLimit(ip);
   if (limited) {
     return { error: "Too many accounts created from this connection. Please try again later." };
+  }
+
+  // No-op (always succeeds) until TURNSTILE_SECRET_KEY is set in .env — see
+  // lib/turnstile.js. Checked before touching the database so a bot never
+  // gets far enough to trigger a real signup attempt.
+  const turnstileToken = formData.get("cf-turnstile-response")?.toString();
+  const { success: turnstilePassed } = await verifyTurnstileToken(turnstileToken, ip);
+  if (!turnstilePassed) {
+    return { error: "Please complete the verification challenge and try again." };
   }
 
   const firstName = formData.get("firstName")?.toString().trim();

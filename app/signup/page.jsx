@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { signupAction } from "./actions.js";
 import LoadingOverlay from "../components/LoadingOverlay.jsx";
+import TurnstileWidget from "../components/TurnstileWidget.jsx";
 
 const initialState = { error: null };
 
@@ -92,6 +93,8 @@ export default function SignupPage() {
           />
           <p className="mt-1 text-xs text-zinc-500">At least 8 characters.</p>
         </div>
+
+        <TurnstileWidget />
 
         {state.error && <p className="text-sm text-red-600">{state.error}</p>}
 
