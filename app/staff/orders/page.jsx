@@ -46,7 +46,7 @@ export default async function StaffOrdersPage({ searchParams }) {
   const { status } = await searchParams;
   const activeTab = FILTER_TABS.find((tab) => tab.key === status) ?? FILTER_TABS[0];
 
-  const [orders, orderCount, latestChanged] = await Promise.all([
+  const [orders, orderCount, latestChanged, statusCounts] = await Promise.all([
     prisma.order.findMany({
       where: {
         ...(activeTab.statuses ? { status: { in: activeTab.statuses } } : {}),
@@ -71,6 +71,15 @@ export default async function StaffOrdersPage({ searchParams }) {
       orderBy: { updatedAt: "desc" },
       select: { id: true, status: true, updatedAt: true },
     }),
+    // Powers the little red count badge on each tab below — one groupBy
+    // covers every tab's number at once instead of a separate count() per
+    // tab. Same abandoned/expired exclusion as the orders list itself, so an
+    // abandoned GCash cart never shows up as a phantom "Pending" count.
+    prisma.order.groupBy({
+      by: ["status"],
+      where: EXCLUDE_ABANDONED_EXPIRED_ORDERS_WHERE,
+      _count: { _all: true },
+    }),
   ]);
 
   // Matches exactly what /api/staff/orders/poll computes — same basis, so the
@@ -78,6 +87,14 @@ export default async function StaffOrdersPage({ searchParams }) {
   // (and pointlessly) triggering a refresh because the two were built
   // differently.
   const signature = `${orderCount}|${latestChanged?.id ?? ""}|${latestChanged?.status ?? ""}|${latestChanged?.updatedAt?.getTime() ?? 0}`;
+
+  const countByStatus = Object.fromEntries(statusCounts.map((row) => [row.status, row._count._all]));
+  function tabCount(tab) {
+    if (!tab.statuses) {
+      return statusCounts.reduce((sum, row) => sum + row._count._all, 0);
+    }
+    return tab.statuses.reduce((sum, s) => sum + (countByStatus[s] ?? 0), 0);
+  }
 
   return (
     <div className="mx-auto w-full max-w-6xl">
@@ -89,19 +106,32 @@ export default async function StaffOrdersPage({ searchParams }) {
       </div>
 
       <div className="mb-6 flex flex-wrap gap-2">
-        {FILTER_TABS.map((tab) => (
-          <Link
-            key={tab.key}
-            href={tab.key === "all" ? "/staff/orders" : `/staff/orders?status=${tab.key}`}
-            className={`min-h-11 rounded-full px-4 py-2 text-sm font-semibold flex items-center ${
-              activeTab.key === tab.key
-                ? "bg-red-600 text-white"
-                : "border border-zinc-200 bg-white text-zinc-600"
-            }`}
-          >
-            {tab.label}
-          </Link>
-        ))}
+        {FILTER_TABS.map((tab) => {
+          const count = tabCount(tab);
+          const isActive = activeTab.key === tab.key;
+          return (
+            <Link
+              key={tab.key}
+              href={tab.key === "all" ? "/staff/orders" : `/staff/orders?status=${tab.key}`}
+              className={`min-h-11 rounded-full px-4 py-2 text-sm font-semibold flex items-center gap-1.5 ${
+                isActive
+                  ? "bg-red-600 text-white"
+                  : "border border-zinc-200 bg-white text-zinc-600"
+              }`}
+            >
+              {tab.label}
+              {count > 0 && (
+                <span
+                  className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-bold ${
+                    isActive ? "bg-white text-red-600" : "bg-red-600 text-white"
+                  }`}
+                >
+                  {count}
+                </span>
+              )}
+            </Link>
+          );
+        })}
       </div>
 
       {orders.length === 0 ? (
