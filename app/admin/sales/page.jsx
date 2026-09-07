@@ -8,15 +8,23 @@ function daysAgo(n) {
   return d;
 }
 
-async function getPeriodTotal(since) {
-  const [sum, count] = await Promise.all([
-    prisma.payment.aggregate({
-      where: { status: "PAID", paidAt: { gte: since } },
-      _sum: { amount: true },
-    }),
-    prisma.payment.count({ where: { status: "PAID", paidAt: { gte: since } } }),
-  ]);
-  return { total: Number(sum._sum.amount ?? 0), count };
+// Queries Order (not just Payment) so the delivery-fee portion of each sale
+// can be pulled out alongside the total — Order.deliveryFee already exists
+// per-order (see lib/deliveryZones.js), Payment only knows the blended
+// amount actually charged.
+async function getPeriodStats(since) {
+  const orders = await prisma.order.findMany({
+    where: { payment: { status: "PAID", paidAt: { gte: since } } },
+    include: { payment: true },
+  });
+
+  let total = 0;
+  let deliveryFees = 0;
+  for (const order of orders) {
+    total += Number(order.payment.amount);
+    deliveryFees += Number(order.deliveryFee);
+  }
+  return { total, deliveryFees, count: orders.length };
 }
 
 const RANGES = {
@@ -33,8 +41,9 @@ async function getBranchBreakdown(since) {
   const byBranch = new Map();
   for (const order of orders) {
     const key = order.branch.id;
-    const entry = byBranch.get(key) ?? { name: order.branch.name, total: 0, count: 0 };
+    const entry = byBranch.get(key) ?? { name: order.branch.name, total: 0, deliveryFees: 0, count: 0 };
     entry.total += Number(order.payment.amount);
+    entry.deliveryFees += Number(order.deliveryFee);
     entry.count += 1;
     byBranch.set(key, entry);
   }
@@ -47,9 +56,9 @@ export default async function AdminSalesPage({ searchParams }) {
   const since = RANGES[rangeKey].since();
 
   const [today, thisWeek, thisMonth, byBranch] = await Promise.all([
-    getPeriodTotal(daysAgo(0)),
-    getPeriodTotal(daysAgo(6)),
-    getPeriodTotal(daysAgo(29)),
+    getPeriodStats(daysAgo(0)),
+    getPeriodStats(daysAgo(6)),
+    getPeriodStats(daysAgo(29)),
     getBranchBreakdown(since),
   ]);
 
@@ -67,6 +76,11 @@ export default async function AdminSalesPage({ searchParams }) {
             <p className="text-sm text-zinc-500">{label}</p>
             <p className="mt-1 text-2xl font-bold text-zinc-900">₱{data.total.toFixed(2)}</p>
             <p className="text-xs text-zinc-400">{data.count} paid order{data.count === 1 ? "" : "s"}</p>
+            {data.deliveryFees > 0 && (
+              <p className="mt-1 text-xs text-zinc-500">
+                incl. ₱{data.deliveryFees.toFixed(2)} delivery fees
+              </p>
+            )}
           </div>
         ))}
       </div>
@@ -97,6 +111,7 @@ export default async function AdminSalesPage({ searchParams }) {
               <tr>
                 <th className="py-2">Branch</th>
                 <th className="py-2">Orders</th>
+                <th className="py-2">Delivery fees</th>
                 <th className="py-2">Total</th>
               </tr>
             </thead>
@@ -105,6 +120,7 @@ export default async function AdminSalesPage({ searchParams }) {
                 <tr key={branch.name} className="border-t border-zinc-100">
                   <td className="py-2 text-zinc-900">{branch.name}</td>
                   <td className="py-2 text-zinc-600">{branch.count}</td>
+                  <td className="py-2 text-zinc-600">₱{branch.deliveryFees.toFixed(2)}</td>
                   <td className="py-2 font-medium text-zinc-900">₱{branch.total.toFixed(2)}</td>
                 </tr>
               ))}

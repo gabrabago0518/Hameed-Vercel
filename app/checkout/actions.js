@@ -7,9 +7,32 @@ import { isProfileComplete } from "../../lib/profile.js";
 import { getFulfillment, setFulfillment, clearFulfillment } from "../../lib/fulfillment.js";
 import { getCartDetails, clearCart } from "../../lib/cart.js";
 import { getDeliveryFee } from "../../lib/deliveryZones.js";
+import { validatePromoCode } from "../../lib/promoCode.js";
+import { getAppliedPromoCode, setAppliedPromoCode, clearAppliedPromoCode } from "../../lib/promoCookie.js";
 import { prisma } from "../../lib/prisma.js";
 import { createAndAttachPaymentIntent } from "../../lib/paymongo.js";
 import { resolveBaseUrl } from "../../lib/requestUrl.js";
+
+export async function applyPromoCodeAction(prevState, formData) {
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect("/login");
+  }
+
+  const code = formData.get("code")?.toString();
+  const { total } = await getCartDetails();
+  const result = await validatePromoCode(code, total);
+  if (!result.valid) {
+    return { error: result.error };
+  }
+
+  await setAppliedPromoCode(result.promoCode.code);
+  return { error: null };
+}
+
+export async function removePromoCodeAction() {
+  await clearAppliedPromoCode();
+}
 
 const PAYMENT_WINDOW_MS = 15 * 60 * 1000; // how long a QR/GCash link stays valid
 
@@ -94,7 +117,24 @@ export async function placeOrderAction(formData) {
     deliveryFee = getDeliveryFee(address.city);
   }
 
-  const orderTotal = total + deliveryFee;
+  // Re-validated here against the current subtotal and the code's current
+  // rule, never trusted from whatever it looked like when it was applied —
+  // maxUses/expiry/active status can all have changed since. Silently drops
+  // an invalid code rather than blocking checkout over it; the customer
+  // already saw it applied on the payment page, and losing a stale discount
+  // at the last second is a smaller problem than the order stalling here.
+  const appliedCode = await getAppliedPromoCode();
+  let promoCodeId = null;
+  let discountAmount = 0;
+  if (appliedCode) {
+    const promoResult = await validatePromoCode(appliedCode, total);
+    if (promoResult.valid) {
+      promoCodeId = promoResult.promoCode.id;
+      discountAmount = promoResult.discountAmount;
+    }
+  }
+
+  const orderTotal = total + deliveryFee - discountAmount;
 
   // The amount the customer says they'll hand over in cash — collected on
   // the payment step so whoever hands off the order knows how much change to
@@ -124,6 +164,8 @@ export async function placeOrderAction(formData) {
       status: initialStatus,
       subtotal: total,
       deliveryFee,
+      discountAmount,
+      ...(promoCodeId ? { promoCode: { connect: { id: promoCodeId } } } : {}),
       total: orderTotal,
       items: {
         create: items.map((item) => ({
@@ -219,6 +261,21 @@ export async function placeOrderAction(formData) {
   // not by re-adding items to a fresh cart.
   await clearCart();
   await clearFulfillment();
+  await clearAppliedPromoCode();
+
+  // Best-effort, same as the PayMongo intent creation above — a failure here
+  // shouldn't lose an already-placed order. Worst case a code's usedCount
+  // undercounts by one, which is a rounding error, not a correctness bug.
+  if (promoCodeId) {
+    try {
+      await prisma.promoCode.update({
+        where: { id: promoCodeId },
+        data: { usedCount: { increment: 1 } },
+      });
+    } catch (error) {
+      console.error(`Failed to record promo code usage for order ${order.id}:`, error.message);
+    }
+  }
 
   redirect(`/checkout/confirmation/${order.id}`);
 }

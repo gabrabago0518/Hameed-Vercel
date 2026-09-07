@@ -1,13 +1,26 @@
 import Link from "next/link";
 import { prisma } from "../../../lib/prisma.js";
-import { STATUS_LABELS } from "../../../lib/orderStatus.js";
+import { STATUS_LABELS, isPaymentWindowExpired } from "../../../lib/orderStatus.js";
 import { verifyCodOrderAction } from "./actions.js";
 
 const STATUS_OPTIONS = Object.keys(STATUS_LABELS);
+const PAGE_SIZE = 25;
+
+function buildPageHref(page, { status, search }) {
+  const params = new URLSearchParams();
+  if (status) params.set("status", status);
+  if (search) params.set("q", search);
+  if (page > 1) params.set("page", String(page));
+  const qs = params.toString();
+  return qs ? `/admin/orders?${qs}` : "/admin/orders";
+}
 
 export default async function AdminOrdersPage({ searchParams }) {
-  const { status, q } = await searchParams;
+  const { status, q, page: rawPage } = await searchParams;
   const search = q?.toString().trim();
+
+  const requestedPage = rawPage ? Number.parseInt(rawPage.toString(), 10) : 1;
+  const page = Number.isNaN(requestedPage) || requestedPage < 1 ? 1 : requestedPage;
 
   const where = {
     ...(status ? { status } : {}),
@@ -21,10 +34,15 @@ export default async function AdminOrdersPage({ searchParams }) {
       : {}),
   };
 
+  const totalCount = await prisma.order.count({ where });
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+
   const orders = await prisma.order.findMany({
     where,
     orderBy: { createdAt: "desc" },
-    take: 100,
+    skip: (currentPage - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
     include: { user: true, payment: true, branch: true },
   });
 
@@ -69,8 +87,8 @@ export default async function AdminOrdersPage({ searchParams }) {
       </form>
 
       <p className="mb-3 text-xs text-zinc-500">
-        Showing {orders.length} order{orders.length === 1 ? "" : "s"}
-        {orders.length === 100 ? " (most recent 100)" : ""}
+        Showing {orders.length} of {totalCount} order{totalCount === 1 ? "" : "s"}
+        {totalPages > 1 ? ` (page ${currentPage} of ${totalPages})` : ""}
       </p>
 
       <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white">
@@ -91,6 +109,7 @@ export default async function AdminOrdersPage({ searchParams }) {
               const needsConfirmation =
                 order.payment?.method === "CASH_ON_DELIVERY" &&
                 order.status === "PENDING_CONFIRMATION";
+              const expiredPending = isPaymentWindowExpired(order);
 
               return (
                 <tr
@@ -112,10 +131,14 @@ export default async function AdminOrdersPage({ searchParams }) {
                   <td className="px-4 py-3">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${
-                        needsConfirmation ? "bg-amber-200 text-amber-800" : "bg-zinc-100 text-zinc-600"
+                        needsConfirmation
+                          ? "bg-amber-200 text-amber-800"
+                          : expiredPending
+                            ? "bg-zinc-100 text-zinc-400"
+                            : "bg-zinc-100 text-zinc-600"
                       }`}
                     >
-                      {STATUS_LABELS[order.status]}
+                      {expiredPending ? "Payment window expired" : STATUS_LABELS[order.status]}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-zinc-500">
@@ -123,17 +146,26 @@ export default async function AdminOrdersPage({ searchParams }) {
                     {order.createdAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
                   </td>
                   <td className="px-4 py-3">
-                    {needsConfirmation && (
-                      <form action={verifyCodOrderAction}>
-                        <input type="hidden" name="orderId" value={order.id} />
-                        <button
-                          type="submit"
-                          className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700"
-                        >
-                          Verify
-                        </button>
-                      </form>
-                    )}
+                    <div className="flex flex-col gap-2">
+                      {needsConfirmation && (
+                        <form action={verifyCodOrderAction}>
+                          <input type="hidden" name="orderId" value={order.id} />
+                          <button
+                            type="submit"
+                            className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700"
+                          >
+                            Verify
+                          </button>
+                        </form>
+                      )}
+                      <Link
+                        href={`/orders/${order.id}/receipt`}
+                        target="_blank"
+                        className="rounded-lg border border-zinc-200 px-3 py-1.5 text-center text-xs font-semibold text-zinc-600 hover:bg-zinc-50"
+                      >
+                        Print receipt
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               );
@@ -148,6 +180,34 @@ export default async function AdminOrdersPage({ searchParams }) {
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between text-sm">
+          {currentPage > 1 ? (
+            <Link
+              href={buildPageHref(currentPage - 1, { status, search })}
+              className="rounded-lg border border-zinc-300 px-4 py-2 font-medium text-zinc-600 hover:bg-zinc-50"
+            >
+              ← Previous
+            </Link>
+          ) : (
+            <span />
+          )}
+          <span className="text-zinc-500">
+            Page {currentPage} of {totalPages}
+          </span>
+          {currentPage < totalPages ? (
+            <Link
+              href={buildPageHref(currentPage + 1, { status, search })}
+              className="rounded-lg border border-zinc-300 px-4 py-2 font-medium text-zinc-600 hover:bg-zinc-50"
+            >
+              Next →
+            </Link>
+          ) : (
+            <span />
+          )}
+        </div>
+      )}
     </div>
   );
 }

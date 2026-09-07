@@ -1,15 +1,28 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "../../../../lib/prisma.js";
-import { STATUS_LABELS, PAYMENT_METHOD_LABELS } from "../../../../lib/orderStatus.js";
+import { STATUS_LABELS, PAYMENT_METHOD_LABELS, isPaymentWindowExpired } from "../../../../lib/orderStatus.js";
 import { getOrderItemLineTotal, getOrderItemChoiceLabels } from "../../../../lib/orderItemDisplay.js";
-import { verifyCodOrderAction, setOrderStatusAction } from "../actions.js";
+import {
+  verifyCodOrderAction,
+  setOrderStatusAction,
+  refundOrderAction,
+  assignRiderAction,
+  markPickedUpAction,
+  markDeliveredAction,
+} from "../actions.js";
 
 const STATUS_OPTIONS = Object.keys(STATUS_LABELS);
 
+const REFUND_ERROR_MESSAGES = {
+  confirm_required: "Check the confirmation box below, then try again.",
+  not_refundable: "This payment isn't in a refundable state (it may already be refunded, or was never paid).",
+  paymongo_failed: "PayMongo rejected the refund request. Nothing was charged or changed — check the server logs for details.",
+};
+
 export default async function AdminOrderDetailPage({ params, searchParams }) {
   const { id } = await params;
-  const { statusError } = await searchParams;
+  const { statusError, refundError } = await searchParams;
 
   const order = await prisma.order.findUnique({
     where: { id },
@@ -26,13 +39,21 @@ export default async function AdminOrderDetailPage({ params, searchParams }) {
       payment: { include: { codVerifiedBy: true } },
       user: true,
       statusHistory: { orderBy: { createdAt: "asc" }, include: { changedBy: true } },
+      delivery: { include: { rider: true } },
     },
   });
 
   if (!order) notFound();
 
+  // Only DELIVERY orders (order.addressId set) get a rider — a PICKUP order
+  // has no one to assign, the customer collects it themselves at the branch.
+  const activeRiders = order.addressId
+    ? await prisma.rider.findMany({ where: { isActive: true }, orderBy: { name: "asc" } })
+    : [];
+
   const needsConfirmation =
     order.payment?.method === "CASH_ON_DELIVERY" && order.status === "PENDING_CONFIRMATION";
+  const expiredPending = isPaymentWindowExpired(order);
 
   return (
     <div className="mx-auto w-full max-w-2xl">
@@ -40,18 +61,39 @@ export default async function AdminOrderDetailPage({ params, searchParams }) {
         &larr; Back to orders
       </Link>
 
-      <div className="mt-4 flex items-center justify-between">
+      <div className="mt-4 flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-zinc-900">
           {order.payment?.transactionRef ?? order.id}
         </h1>
-        <span
-          className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${
-            needsConfirmation ? "bg-amber-200 text-amber-800" : "bg-zinc-100 text-zinc-600"
-          }`}
-        >
-          {STATUS_LABELS[order.status]}
-        </span>
+        <div className="flex shrink-0 items-center gap-2">
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${
+              needsConfirmation
+                ? "bg-amber-200 text-amber-800"
+                : expiredPending
+                  ? "bg-zinc-100 text-zinc-400"
+                  : "bg-zinc-100 text-zinc-600"
+            }`}
+          >
+            {expiredPending ? "Payment window expired" : STATUS_LABELS[order.status]}
+          </span>
+          <Link
+            href={`/orders/${order.id}/receipt`}
+            target="_blank"
+            className="rounded-lg border border-zinc-200 px-3 py-1 text-xs font-semibold text-zinc-600 hover:bg-zinc-50"
+          >
+            Print receipt
+          </Link>
+        </div>
       </div>
+
+      {expiredPending && (
+        <p className="mt-2 text-xs text-zinc-500">
+          This order&apos;s 15-minute payment window has passed with no payment received.
+          It&apos;ll be automatically cancelled the next time the customer reopens it or the
+          scheduled payment check runs (currently once daily) — nothing for you to do here.
+        </p>
+      )}
 
       {needsConfirmation && (
         <div className="mt-4 flex items-center justify-between rounded-2xl border border-amber-200 bg-amber-50 p-4">
@@ -91,6 +133,81 @@ export default async function AdminOrderDetailPage({ params, searchParams }) {
           <p className="text-sm text-zinc-500">Fulfilled from {order.branch.name}</p>
         )}
       </section>
+
+      {order.addressId && (
+        <section className="mt-4 rounded-2xl border border-zinc-200 bg-white p-5">
+          <h2 className="mb-3 text-sm font-semibold text-zinc-700">Delivery</h2>
+
+          <form action={assignRiderAction} className="flex flex-wrap items-end gap-3">
+            <input type="hidden" name="orderId" value={order.id} />
+            <div>
+              <label className="block text-xs font-medium text-zinc-500">Rider</label>
+              <select
+                name="riderId"
+                defaultValue={order.delivery?.riderId ?? ""}
+                className="mt-1 rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+              >
+                <option value="">Unassigned</option>
+                {activeRiders.map((rider) => (
+                  <option key={rider.id} value={rider.id}>
+                    {rider.name}
+                  </option>
+                ))}
+                {order.delivery?.rider && !order.delivery.rider.isActive && (
+                  <option value={order.delivery.rider.id}>
+                    {order.delivery.rider.name} (inactive)
+                  </option>
+                )}
+              </select>
+            </div>
+            <button
+              type="submit"
+              className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-semibold text-zinc-600 hover:bg-zinc-50"
+            >
+              Save
+            </button>
+          </form>
+
+          <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-zinc-100 pt-4 text-sm">
+            <form action={markPickedUpAction}>
+              <input type="hidden" name="orderId" value={order.id} />
+              <button
+                type="submit"
+                className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-600 hover:bg-zinc-50"
+              >
+                Mark picked up
+              </button>
+            </form>
+            <span className="text-xs text-zinc-500">
+              {order.delivery?.pickedUpAt
+                ? `Picked up at ${order.delivery.pickedUpAt.toLocaleString()}`
+                : "Not picked up yet"}
+            </span>
+          </div>
+
+          <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
+            <form action={markDeliveredAction}>
+              <input type="hidden" name="orderId" value={order.id} />
+              <button
+                type="submit"
+                className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-600 hover:bg-zinc-50"
+              >
+                Mark delivered
+              </button>
+            </form>
+            <span className="text-xs text-zinc-500">
+              {order.delivery?.deliveredAt
+                ? `Delivered at ${order.delivery.deliveredAt.toLocaleString()}`
+                : "Not delivered yet"}
+            </span>
+          </div>
+
+          <p className="mt-3 text-xs text-zinc-400">
+            This is a logistics record only — it doesn&apos;t change the order&apos;s fulfillment
+            status above. Staff still advance that from Order Management as usual.
+          </p>
+        </section>
+      )}
 
       <section className="mt-4 rounded-2xl border border-zinc-200 bg-white p-5">
         <h2 className="mb-3 text-sm font-semibold text-zinc-700">Items</h2>
@@ -149,9 +266,45 @@ export default async function AdminOrderDetailPage({ params, searchParams }) {
                 {order.payment.codVerifiedAt.toLocaleString()}
               </p>
             )}
+            {order.payment.refundedAt && (
+              <p>
+                Refunded at {order.payment.refundedAt.toLocaleString()}
+                {order.payment.paymongoRefundId
+                  ? ` (via PayMongo, ${order.payment.paymongoRefundId})`
+                  : " (recorded manually — no PayMongo transaction to refund)"}
+              </p>
+            )}
           </div>
         ) : (
           <p className="text-sm text-zinc-500">No payment record.</p>
+        )}
+
+        {refundError && (
+          <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+            {REFUND_ERROR_MESSAGES[refundError] ?? "Something went wrong. Please try again."}
+          </div>
+        )}
+
+        {order.payment?.status === "PAID" && (
+          <form action={refundOrderAction} className="mt-4 border-t border-zinc-100 pt-4">
+            <input type="hidden" name="orderId" value={order.id} />
+            <label className="flex items-start gap-2 text-xs text-zinc-500">
+              <input type="checkbox" name="confirmRefund" className="mt-0.5" />
+              <span>
+                Refund ₱{Number(order.total).toFixed(2)} to the customer
+                {order.payment.paymongoPaymentId
+                  ? " via PayMongo"
+                  : " — no PayMongo transaction on file, so this only records the refund; the money itself has to move some other way"}
+                . This doesn&apos;t change the order&apos;s fulfillment status.
+              </span>
+            </label>
+            <button
+              type="submit"
+              className="mt-3 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+            >
+              Refund
+            </button>
+          </form>
         )}
       </section>
 

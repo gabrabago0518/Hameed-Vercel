@@ -5,6 +5,7 @@ import { requireStaff } from "../../lib/roleGuard.js";
 import { prisma } from "../../lib/prisma.js";
 import { getNextOrderStatus } from "../../lib/orderStatus.js";
 import { verifyCodPayment } from "../../lib/orderPayment.js";
+import { notifyOrderStatusChange } from "../../lib/orderNotifications.js";
 
 export async function advanceOrderStatusAction(formData) {
   const staffUser = await requireStaff();
@@ -24,6 +25,8 @@ export async function advanceOrderStatusAction(formData) {
       data: { orderId, status: next, note: "Updated by staff", changedByUserId: staffUser.id },
     }),
   ]);
+
+  await notifyOrderStatusChange(orderId, next);
 
   revalidatePath("/staff/dashboard");
   revalidatePath("/staff/orders");

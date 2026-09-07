@@ -1,21 +1,14 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "../../../../../lib/session.js";
 import { prisma } from "../../../../../lib/prisma.js";
-import { retrievePaymentIntent } from "../../../../../lib/paymongo.js";
-import {
-  markOrderPaid,
-  markOrderPaymentExpired,
-  markOrderPaymentFailed,
-} from "../../../../../lib/orderPayment.js";
+import { reconcilePendingPayment } from "../../../../../lib/orderPayment.js";
 
 // Fallback for "the webhook never arrives": the confirmation page polls this
-// while payment is still PENDING. If PayMongo says the intent has actually
-// succeeded, we reconcile right here instead of waiting on the webhook — and
-// if the payment window has simply run out, we expire it. This is a lazy,
-// on-view check rather than a background job, since there's no
-// cron/scheduler in this project; an order nobody ever looks at again just
-// stays PENDING until someone does (a real production setup would want an
-// actual scheduled sweep for that case).
+// while payment is still PENDING, and reconcilePendingPayment (lib/
+// orderPayment.js) does the actual work of asking PayMongo for the real
+// status and settling it. This is an on-view check — it only ever runs for
+// the one order someone's actively looking at. /api/cron/reconcile-payments
+// covers the case this can't: an order nobody ever reopens.
 export async function GET(request, { params }) {
   const user = await getCurrentUser();
   if (!user) {
@@ -32,37 +25,11 @@ export async function GET(request, { params }) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const payment = order.payment;
-
-  if (payment && payment.status === "PENDING") {
-    if (payment.expiresAt && payment.expiresAt < new Date()) {
-      await markOrderPaymentExpired(order.id);
-    } else if (payment.paymongoPaymentIntentId) {
-      try {
-        const intent = await retrievePaymentIntent(payment.paymongoPaymentIntentId);
-        const status = intent.attributes.status;
-
-        if (status === "succeeded") {
-          await markOrderPaid(order.id);
-        } else if (intent.attributes.last_payment_error || status === "awaiting_payment_method") {
-          // Two different failure signals, because a declined payment and an
-          // expired/abandoned Source don't necessarily look the same:
-          // `last_payment_error` is populated for an active decline, but a
-          // Source that just times out unattended may never set that field
-          // at all — instead PayMongo resets the intent's status back to
-          // "awaiting_payment_method" (ready to attach a new one). Since we
-          // always attach a payment method immediately in
-          // createAndAttachPaymentIntent, ever observing that status again on
-          // a later poll can only mean the attempt we made has fallen
-          // through — there's no other way to get back there in our flow.
-          await markOrderPaymentFailed(
-            order.id,
-            intent.attributes.last_payment_error?.detail || "Payment failed"
-          );
-        }
-      } catch (error) {
-        console.error("Poll: failed to retrieve PayMongo intent:", error.message);
-      }
+  if (order.payment && order.payment.status === "PENDING") {
+    try {
+      await reconcilePendingPayment(order.payment);
+    } catch (error) {
+      console.error("Poll: failed to reconcile payment:", error.message);
     }
   }
 

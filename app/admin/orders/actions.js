@@ -3,9 +3,10 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "../../../lib/roleGuard.js";
-import { verifyCodPayment } from "../../../lib/orderPayment.js";
+import { verifyCodPayment, refundOrderPayment } from "../../../lib/orderPayment.js";
 import { prisma } from "../../../lib/prisma.js";
 import { STATUS_LABELS, isRegularTransition } from "../../../lib/orderStatus.js";
+import { notifyOrderStatusChange } from "../../../lib/orderNotifications.js";
 
 // Deliberately calls requireAdmin() here, not just relying on the /admin
 // layout's own gate — this is the one action on this page that should never
@@ -63,6 +64,92 @@ export async function setOrderStatusAction(formData) {
       },
     }),
   ]);
+
+  await notifyOrderStatusChange(orderId, newStatus);
+
+  revalidatePath("/admin/orders");
+  revalidatePath(`/admin/orders/${orderId}`);
+  revalidatePath("/staff/dashboard");
+  revalidatePath("/staff/orders");
+  revalidatePath(`/orders/${orderId}`);
+  redirect(`/admin/orders/${orderId}`);
+}
+
+// Rider assignment/pickup/delivered are deliberately just logistics
+// record-keeping on the existing (previously unused) OrderDelivery model —
+// they never touch Order.status. Staff still drives the actual fulfillment
+// status via their own "Mark [next status]" button; this is a parallel,
+// informational trail of who's carrying an order and when it actually left/
+// arrived, independent of that state machine.
+export async function assignRiderAction(formData) {
+  await requireAdmin();
+
+  const orderId = formData.get("orderId")?.toString();
+  const riderId = formData.get("riderId")?.toString() || null;
+  if (!orderId) return;
+
+  await prisma.orderDelivery.upsert({
+    where: { orderId },
+    create: { orderId, riderId },
+    update: { riderId },
+  });
+
+  revalidatePath(`/admin/orders/${orderId}`);
+}
+
+export async function markPickedUpAction(formData) {
+  await requireAdmin();
+
+  const orderId = formData.get("orderId")?.toString();
+  if (!orderId) return;
+
+  await prisma.orderDelivery.upsert({
+    where: { orderId },
+    create: { orderId, pickedUpAt: new Date() },
+    update: { pickedUpAt: new Date() },
+  });
+
+  revalidatePath(`/admin/orders/${orderId}`);
+}
+
+export async function markDeliveredAction(formData) {
+  await requireAdmin();
+
+  const orderId = formData.get("orderId")?.toString();
+  if (!orderId) return;
+
+  await prisma.orderDelivery.upsert({
+    where: { orderId },
+    create: { orderId, deliveredAt: new Date() },
+    update: { deliveredAt: new Date() },
+  });
+
+  revalidatePath(`/admin/orders/${orderId}`);
+}
+
+// Admin-only, same requireAdmin() pattern as verifyCodOrderAction above —
+// this moves real money (or at least records that it should have), so it's
+// gated the same defense-in-depth way regardless of whatever /admin's own
+// layout gate happens to allow later. Requires an explicit confirmation
+// checkbox, same reasoning as setOrderStatusAction's override — a refund
+// isn't something to fire off from a misclick.
+export async function refundOrderAction(formData) {
+  await requireAdmin();
+
+  const orderId = formData.get("orderId")?.toString();
+  const confirmed = formData.get("confirmRefund") === "on";
+  if (!orderId) return;
+
+  if (!confirmed) {
+    redirect(`/admin/orders/${orderId}?refundError=confirm_required`);
+  }
+
+  const result = await refundOrderPayment(orderId);
+
+  if (!result.changed) {
+    const error = result.reason === "paymongo_error" ? "paymongo_failed" : "not_refundable";
+    redirect(`/admin/orders/${orderId}?refundError=${error}`);
+  }
 
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
