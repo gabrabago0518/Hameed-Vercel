@@ -1,5 +1,6 @@
 import { prisma } from "../../../lib/prisma.js";
 import { createRiderAction, toggleRiderActiveAction } from "./actions.js";
+import FormSpinner from "../../components/FormSpinner.jsx";
 
 export default async function AdminRidersPage() {
   const riders = await prisma.rider.findMany({
@@ -17,6 +18,7 @@ export default async function AdminRidersPage() {
       <section className="mt-6 rounded-2xl border border-zinc-200 bg-white p-5">
         <h2 className="mb-3 text-sm font-semibold text-zinc-700">Add a rider</h2>
         <form action={createRiderAction} className="flex flex-wrap items-end gap-3">
+          <FormSpinner />
           <div>
             <label className="block text-xs font-medium text-zinc-500">Name</label>
             <input
@@ -73,6 +75,7 @@ export default async function AdminRidersPage() {
                   </p>
                 </div>
                 <form action={toggleRiderActiveAction}>
+                  <FormSpinner />
                   <input type="hidden" name="riderId" value={rider.id} />
                   <button
                     type="submit"

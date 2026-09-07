@@ -2,6 +2,7 @@ import { requireAdmin } from "../../../lib/roleGuard.js";
 import { prisma } from "../../../lib/prisma.js";
 import { changeUserRoleAction, deleteUserAction } from "./actions.js";
 import DeleteAccountForm from "./DeleteAccountForm.jsx";
+import FormSpinner from "../../components/FormSpinner.jsx";
 
 const ROLES = ["CUSTOMER", "STAFF", "ADMIN"];
 
@@ -43,6 +44,7 @@ export default async function AdminAccountsPage() {
                       <span className="text-zinc-400">{user.role} (you)</span>
                     ) : (
                       <form action={changeUserRoleAction} className="flex items-center gap-2">
+                        <FormSpinner />
                         <input type="hidden" name="userId" value={user.id} />
                         <select
                           name="role"

@@ -10,6 +10,7 @@ import { formatManilaDate, formatManilaTime } from "../../../lib/timezone.js";
 import { advanceOrderStatusAction, verifyCodOrderAction, markUnreachableAction } from "../actions.js";
 import StaffOrdersPoller from "../StaffOrdersPoller.jsx";
 import RefreshButton from "../RefreshButton.jsx";
+import FormSpinner from "../../components/FormSpinner.jsx";
 import { getOrderItemChoiceLabels } from "../../../lib/orderItemDisplay.js";
 
 // The four filter tabs the staff asked for, plus "All" as the default —
@@ -27,6 +28,7 @@ const FILTER_TABS = [
   { key: "preparing", label: "Preparing", statuses: ["PREPARING"] },
   { key: "out_for_delivery", label: "Out for Delivery", statuses: ["READY_FOR_PICKUP", "OUT_FOR_DELIVERY"] },
   { key: "completed", label: "Completed", statuses: ["DELIVERED"] },
+  { key: "refunded", label: "Refunded", statuses: ["REFUNDED"] },
 ];
 
 const PAYMENT_STATUS_STYLES = {
@@ -184,6 +186,7 @@ export default async function StaffOrdersPage({ searchParams }) {
                         {needsCodVerification && (
                           <>
                             <form action={verifyCodOrderAction}>
+                              <FormSpinner />
                               <input type="hidden" name="orderId" value={order.id} />
                               <button
                                 type="submit"
@@ -193,6 +196,7 @@ export default async function StaffOrdersPage({ searchParams }) {
                               </button>
                             </form>
                             <form action={markUnreachableAction}>
+                              <FormSpinner />
                               <input type="hidden" name="orderId" value={order.id} />
                               <button
                                 type="submit"
@@ -205,6 +209,7 @@ export default async function StaffOrdersPage({ searchParams }) {
                         )}
                         {nextLabel && (
                           <form action={advanceOrderStatusAction}>
+                            <FormSpinner />
                             <input type="hidden" name="orderId" value={order.id} />
                             <button
                               type="submit"

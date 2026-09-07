@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { loginAction } from "./actions.js";
+import LoadingOverlay from "../components/LoadingOverlay.jsx";
 
 const initialState = { error: null };
 
@@ -49,6 +50,7 @@ export default function LoginPage() {
         }}
         className="mt-6 flex flex-col gap-4"
       >
+        {pending && <LoadingOverlay />}
         <div>
           <label htmlFor="email" className="text-sm font-medium text-zinc-700">
             Email

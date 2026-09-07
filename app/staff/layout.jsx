@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireStaff } from "../../lib/roleGuard.js";
 import { logoutAction } from "../logout/actions.js";
+import FormSpinner from "../components/FormSpinner.jsx";
 
 const NAV_LINKS = [
   { href: "/staff/dashboard", label: "Dashboard" },
@@ -21,6 +22,7 @@ export default async function StaffLayout({ children }) {
           <div className="flex items-center gap-4 text-sm text-zinc-600">
             <span className="hidden sm:inline">{user.name}</span>
             <form action={logoutAction}>
+              <FormSpinner />
               <button type="submit" className="font-medium text-red-600 hover:underline">
                 Log out
               </button>

@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 import { applyPromoCodeAction, removePromoCodeAction } from "./actions.js";
+import FormSpinner from "../components/FormSpinner.jsx";
+import LoadingOverlay from "../components/LoadingOverlay.jsx";
 
 const initialState = { error: null };
 
@@ -14,6 +16,7 @@ export default function PromoCodeForm({ appliedCode, appliedCodeInvalid }) {
   if (appliedCode && !appliedCodeInvalid) {
     return (
       <form action={removePromoCodeAction} className="mt-3 flex items-center justify-between gap-3">
+        <FormSpinner />
         <p className="text-sm text-emerald-700">
           Code <span className="font-semibold">{appliedCode}</span> applied.
         </p>
@@ -31,6 +34,7 @@ export default function PromoCodeForm({ appliedCode, appliedCodeInvalid }) {
           That promo code isn&apos;t valid anymore — removed.
         </p>
       )}
+      {pending && <LoadingOverlay />}
       <form action={formAction} className="flex gap-2">
         <input
           name="code"

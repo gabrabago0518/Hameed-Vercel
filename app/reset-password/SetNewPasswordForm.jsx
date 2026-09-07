@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { resetPasswordAction } from "./actions.js";
+import LoadingOverlay from "../components/LoadingOverlay.jsx";
 
 const initialState = { error: null };
 
@@ -10,6 +11,7 @@ export default function SetNewPasswordForm({ token }) {
 
   return (
     <form action={formAction} className="mt-6 flex flex-col gap-4">
+      {pending && <LoadingOverlay />}
       <input type="hidden" name="token" value={token} />
 
       <div>

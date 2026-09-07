@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { resendForExpiredTokenAction } from "./actions.js";
+import LoadingOverlay from "../components/LoadingOverlay.jsx";
 
 const initialState = { message: null, error: null };
 
@@ -10,6 +11,7 @@ export default function ResendExpiredForm({ userId }) {
 
   return (
     <form action={formAction} className="mt-4 flex flex-col items-center">
+      {pending && <LoadingOverlay />}
       <input type="hidden" name="userId" value={userId} />
       {state.message && <p className="mb-3 text-sm text-emerald-700">{state.message}</p>}
       {state.error && <p className="mb-3 text-sm text-red-600">{state.error}</p>}

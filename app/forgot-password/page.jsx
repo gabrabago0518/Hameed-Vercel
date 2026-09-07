@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { requestPasswordResetAction } from "./actions.js";
+import LoadingOverlay from "../components/LoadingOverlay.jsx";
 
 const initialState = { error: null };
 
@@ -19,6 +20,7 @@ export default function ForgotPasswordPage() {
       </p>
 
       <form action={formAction} className="mt-6 flex flex-col gap-4">
+        {pending && <LoadingOverlay />}
         <div>
           <label htmlFor="email" className="text-sm font-medium text-zinc-700">
             Email

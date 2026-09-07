@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Home, UtensilsCrossed, UserRound } from "lucide-react";
 import { logoutAction } from "../logout/actions.js";
 import HeaderCartButton from "./HeaderCartButton.jsx";
+import FormSpinner from "./FormSpinner.jsx";
 
 // user/cartCount come from the root layout now, rather than this component
 // fetching its own — the layout already needs both (for the cart panel and
@@ -93,6 +94,7 @@ export default function Header({ user, cartCount }) {
                     </Link>
                   )}
                   <form action={logoutAction}>
+                    <FormSpinner />
                     <button
                       type="submit"
                       className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-zinc-700 hover:bg-zinc-50"

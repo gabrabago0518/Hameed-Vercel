@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { requestPasswordResetAction } from "../actions.js";
+import LoadingOverlay from "../../components/LoadingOverlay.jsx";
 
 const initialState = { error: null };
 
@@ -10,6 +11,7 @@ export default function ResendForm({ initialEmail }) {
 
   return (
     <form action={formAction} className="mt-6 flex flex-col gap-3">
+      {pending && <LoadingOverlay />}
       <div>
         <label htmlFor="email" className="text-sm font-medium text-zinc-700">
           Email address

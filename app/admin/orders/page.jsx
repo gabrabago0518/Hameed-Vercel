@@ -6,6 +6,7 @@ import {
   EXCLUDE_ABANDONED_EXPIRED_ORDERS_WHERE,
 } from "../../../lib/orderStatus.js";
 import { formatManilaDate, formatManilaTime } from "../../../lib/timezone.js";
+import FormSpinner from "../../components/FormSpinner.jsx";
 import { verifyCodOrderAction, markUnreachableAction } from "./actions.js";
 
 const STATUS_OPTIONS = Object.keys(STATUS_LABELS);
@@ -162,6 +163,7 @@ export default async function AdminOrdersPage({ searchParams }) {
                       {needsConfirmation && (
                         <>
                           <form action={verifyCodOrderAction}>
+                            <FormSpinner />
                             <input type="hidden" name="orderId" value={order.id} />
                             <button
                               type="submit"
@@ -171,6 +173,7 @@ export default async function AdminOrdersPage({ searchParams }) {
                             </button>
                           </form>
                           <form action={markUnreachableAction}>
+                            <FormSpinner />
                             <input type="hidden" name="orderId" value={order.id} />
                             <button
                               type="submit"

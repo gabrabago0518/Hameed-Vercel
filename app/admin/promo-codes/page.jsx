@@ -2,6 +2,7 @@ import { prisma } from "../../../lib/prisma.js";
 import { formatManilaDate } from "../../../lib/timezone.js";
 import { togglePromoCodeActiveAction } from "./actions.js";
 import CreatePromoCodeForm from "./CreatePromoCodeForm.jsx";
+import FormSpinner from "../../components/FormSpinner.jsx";
 
 function formatDiscount(promoCode) {
   const value = Number(promoCode.value);
@@ -70,6 +71,7 @@ export default async function AdminPromoCodesPage() {
                     </p>
                   </div>
                   <form action={togglePromoCodeActiveAction}>
+                    <FormSpinner />
                     <input type="hidden" name="promoCodeId" value={promoCode.id} />
                     <button
                       type="submit"

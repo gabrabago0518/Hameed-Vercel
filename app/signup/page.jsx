@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { signupAction } from "./actions.js";
+import LoadingOverlay from "../components/LoadingOverlay.jsx";
 
 const initialState = { error: null };
 
@@ -16,6 +17,7 @@ export default function SignupPage() {
       </h1>
 
       <form action={formAction} className="mt-6 flex flex-col gap-4">
+        {pending && <LoadingOverlay />}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label htmlFor="firstName" className="text-sm font-medium text-zinc-700">

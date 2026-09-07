@@ -6,6 +6,7 @@ import { prisma } from "../../lib/prisma.js";
 import { STATUS_LABELS, EXCLUDE_ABANDONED_EXPIRED_ORDERS_WHERE } from "../../lib/orderStatus.js";
 import { formatManilaDate, formatManilaTime } from "../../lib/timezone.js";
 import PhoneField from "../components/PhoneField.jsx";
+import FormSpinner from "../components/FormSpinner.jsx";
 
 export default async function AccountPage() {
   const user = await getCurrentUser();
@@ -147,6 +148,7 @@ export default async function AccountPage() {
       </section>
 
       <form action={logoutAction}>
+        <FormSpinner />
         <button
           type="submit"
           className="w-full rounded-full border border-zinc-300 px-6 py-2.5 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-50"

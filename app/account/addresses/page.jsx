@@ -10,6 +10,7 @@ import {
   deleteAddressAction,
 } from "./actions.js";
 import { MAX_ADDRESSES_PER_USER } from "../../../lib/addressConfig.js";
+import FormSpinner from "../../components/FormSpinner.jsx";
 
 const ERROR_MESSAGES = {
   invalid: "Please fill in all fields with a valid city and barangay.",
@@ -51,6 +52,7 @@ function AddressCard({ address }) {
         </Link>
         {!address.isDefault && (
           <form action={setDefaultAddressAction}>
+            <FormSpinner />
             <input type="hidden" name="addressId" value={address.id} />
             <button
               type="submit"
@@ -61,6 +63,7 @@ function AddressCard({ address }) {
           </form>
         )}
         <form action={deleteAddressAction}>
+          <FormSpinner />
           <input type="hidden" name="addressId" value={address.id} />
           <button
             type="submit"

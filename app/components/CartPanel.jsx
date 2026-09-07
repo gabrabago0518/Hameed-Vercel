@@ -4,6 +4,7 @@ import Link from "next/link";
 import { X } from "lucide-react";
 import { removeFromCartAction, updateCartQuantityAction } from "../cart/actions.js";
 import { useCartUI } from "./CartUIContext.jsx";
+import FormSpinner from "./FormSpinner.jsx";
 
 // Formerly FloatingCart — the bottom-right floating trigger button is gone
 // now that the header's cart button is the only way to open this (by
@@ -58,6 +59,7 @@ export default function CartPanel({ items, total }) {
 
                 <div className="flex items-center gap-2">
                   <form action={updateCartQuantityAction}>
+                    <FormSpinner />
                     <input type="hidden" name="lineId" value={item.lineId} />
                     <input type="hidden" name="quantity" value={item.quantity - 1} />
                     <button
@@ -73,6 +75,7 @@ export default function CartPanel({ items, total }) {
                   </span>
 
                   <form action={updateCartQuantityAction}>
+                    <FormSpinner />
                     <input type="hidden" name="lineId" value={item.lineId} />
                     <input type="hidden" name="quantity" value={item.quantity + 1} />
                     <button
@@ -88,6 +91,7 @@ export default function CartPanel({ items, total }) {
                   </span>
 
                   <form action={removeFromCartAction}>
+                    <FormSpinner />
                     <input type="hidden" name="lineId" value={item.lineId} />
                     <button
                       type="submit"

@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { createPromoCodeAction } from "./actions.js";
+import LoadingOverlay from "../../components/LoadingOverlay.jsx";
 
 const initialState = { error: null };
 
@@ -10,6 +11,7 @@ export default function CreatePromoCodeForm() {
 
   return (
     <form action={formAction} className="flex flex-wrap items-end gap-3">
+      {pending && <LoadingOverlay />}
       <div>
         <label className="block text-xs font-medium text-zinc-500">Code</label>
         <input

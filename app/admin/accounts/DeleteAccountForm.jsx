@@ -1,5 +1,7 @@
 "use client";
 
+import FormSpinner from "../../components/FormSpinner.jsx";
+
 // A plain Server Component form has no way to show a confirm dialog before
 // submitting, so this one small piece is a client component — everything
 // else on /admin/accounts stays a Server Component. deleteUserAction itself
@@ -15,6 +17,7 @@ export default function DeleteAccountForm({ action, userId, userName }) {
         }
       }}
     >
+      <FormSpinner />
       <input type="hidden" name="userId" value={userId} />
       <button
         type="submit"

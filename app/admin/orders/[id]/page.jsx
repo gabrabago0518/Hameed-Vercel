@@ -4,6 +4,7 @@ import { prisma } from "../../../../lib/prisma.js";
 import { STATUS_LABELS, PAYMENT_METHOD_LABELS, isPaymentWindowExpired } from "../../../../lib/orderStatus.js";
 import { formatManilaDateTime } from "../../../../lib/timezone.js";
 import { getOrderItemLineTotal, getOrderItemChoiceLabels } from "../../../../lib/orderItemDisplay.js";
+import FormSpinner from "../../../components/FormSpinner.jsx";
 import {
   verifyCodOrderAction,
   markUnreachableAction,
@@ -112,6 +113,7 @@ export default async function AdminOrderDetailPage({ params, searchParams }) {
           </div>
           <div className="flex shrink-0 flex-col gap-2">
             <form action={verifyCodOrderAction}>
+              <FormSpinner />
               <input type="hidden" name="orderId" value={order.id} />
               <button
                 type="submit"
@@ -121,6 +123,7 @@ export default async function AdminOrderDetailPage({ params, searchParams }) {
               </button>
             </form>
             <form action={markUnreachableAction}>
+              <FormSpinner />
               <input type="hidden" name="orderId" value={order.id} />
               <button
                 type="submit"
@@ -159,6 +162,7 @@ export default async function AdminOrderDetailPage({ params, searchParams }) {
           <h2 className="mb-3 text-sm font-semibold text-zinc-700">Delivery</h2>
 
           <form action={assignRiderAction} className="flex flex-wrap items-end gap-3">
+            <FormSpinner />
             <input type="hidden" name="orderId" value={order.id} />
             <div>
               <label className="block text-xs font-medium text-zinc-500">Rider</label>
@@ -190,6 +194,7 @@ export default async function AdminOrderDetailPage({ params, searchParams }) {
 
           <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-zinc-100 pt-4 text-sm">
             <form action={markPickedUpAction}>
+              <FormSpinner />
               <input type="hidden" name="orderId" value={order.id} />
               <button
                 type="submit"
@@ -207,6 +212,7 @@ export default async function AdminOrderDetailPage({ params, searchParams }) {
 
           <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
             <form action={markDeliveredAction}>
+              <FormSpinner />
               <input type="hidden" name="orderId" value={order.id} />
               <button
                 type="submit"
@@ -307,6 +313,7 @@ export default async function AdminOrderDetailPage({ params, searchParams }) {
 
         {order.payment?.status === "PAID" && (
           <form action={refundOrderAction} className="mt-4 border-t border-zinc-100 pt-4">
+            <FormSpinner />
             <input type="hidden" name="orderId" value={order.id} />
             <label className="flex items-start gap-2 text-xs text-zinc-500">
               <input type="checkbox" name="confirmRefund" className="mt-0.5" />
@@ -340,6 +347,7 @@ export default async function AdminOrderDetailPage({ params, searchParams }) {
         )}
 
         <form action={setOrderStatusAction} className="flex flex-col gap-3">
+          <FormSpinner />
           <input type="hidden" name="orderId" value={order.id} />
           <select
             name="status"
