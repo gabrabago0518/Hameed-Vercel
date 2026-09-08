@@ -6,12 +6,23 @@ import { prisma } from "../../lib/prisma.js";
 import { issueVerificationEmail } from "../../lib/emailVerification.js";
 import { checkSignupRateLimit } from "../../lib/signupThrottle.js";
 import { getClientIp } from "../../lib/clientIp.js";
+import { isValidName, isValidPhilippineMobile } from "../../lib/signupValidation.js";
+import { verifyTurnstileToken } from "../../lib/turnstile.js";
 
 export async function signupAction(prevState, formData) {
   const ip = await getClientIp();
   const { limited } = await checkSignupRateLimit(ip);
   if (limited) {
     return { error: "Too many accounts created from this connection. Please try again later." };
+  }
+
+  // No-op (always succeeds) until TURNSTILE_SECRET_KEY is set in .env — see
+  // lib/turnstile.js. Checked before touching the database so a bot never
+  // gets far enough to trigger a real signup attempt.
+  const turnstileToken = formData.get("cf-turnstile-response")?.toString();
+  const { success: turnstilePassed } = await verifyTurnstileToken(turnstileToken, ip);
+  if (!turnstilePassed) {
+    return { error: "Please complete the verification challenge and try again." };
   }
 
   const firstName = formData.get("firstName")?.toString().trim();
@@ -29,6 +40,15 @@ export async function signupAction(prevState, formData) {
 
   if (!firstName || !lastName || !email || !phone || !password) {
     return { error: "Please fill in all fields." };
+  }
+  // By request: reject an obviously fake name or phone number rather than
+  // just checking they're non-empty — see lib/signupValidation.js for
+  // exactly what "obviously fake" means here (and what it can't catch).
+  if (!isValidName(firstName) || !isValidName(lastName)) {
+    return { error: "Please enter your real first and last name." };
+  }
+  if (!isValidPhilippineMobile(phoneDigits)) {
+    return { error: "Please enter a valid Philippine mobile number (e.g. 9171234567)." };
   }
   if (password.length < 8) {
     return { error: "Password must be at least 8 characters." };

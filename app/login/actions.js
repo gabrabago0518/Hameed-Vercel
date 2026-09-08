@@ -10,6 +10,8 @@ import {
   resetLoginAttempts,
   formatLockMessage,
 } from "../../lib/loginThrottle.js";
+import { getClientIp } from "../../lib/clientIp.js";
+import { verifyTurnstileToken } from "../../lib/turnstile.js";
 
 export async function loginAction(prevState, formData) {
   const email = formData.get("email")?.toString().trim().toLowerCase();
@@ -17,6 +19,17 @@ export async function loginAction(prevState, formData) {
 
   if (!email || !password) {
     return { error: "Please enter your email and password." };
+  }
+
+  // No-op (always succeeds) until TURNSTILE_SECRET_KEY is set in .env — see
+  // lib/turnstile.js. Checked up front, before any password/lockout logic,
+  // so a credential-stuffing bot can't use the login form as a free way to
+  // probe passwords at all once this is actually configured.
+  const ip = await getClientIp();
+  const turnstileToken = formData.get("cf-turnstile-response")?.toString();
+  const { success: turnstilePassed } = await verifyTurnstileToken(turnstileToken, ip);
+  if (!turnstilePassed) {
+    return { error: "Please complete the verification challenge and try again." };
   }
 
   const user = await prisma.user.findUnique({ where: { email } });

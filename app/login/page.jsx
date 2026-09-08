@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { loginAction } from "./actions.js";
 import LoadingOverlay from "../components/LoadingOverlay.jsx";
+import TurnstileWidget from "../components/TurnstileWidget.jsx";
 
 const initialState = { error: null };
 
@@ -83,6 +84,8 @@ export default function LoginPage() {
             className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none"
           />
         </div>
+
+        <TurnstileWidget />
 
         {state.error && <p className="text-sm text-red-600">{state.error}</p>}
 
